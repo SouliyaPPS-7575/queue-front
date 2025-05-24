@@ -1,0 +1,185 @@
+/* Improved styles for react-phone-input-2 */
+
+/* Hide the "Phone" label */
+.react-tel-input .special-label {
+  display: none !important;
+}
+
+/* Override react-phone-input-2 styles to match your UI */
+.react-tel-input .form-control {
+  width: 100% !important;
+  height: 56px !important;
+  font-size: 1rem !important;
+  border-radius: 4px !important;
+  border: 1px solid rgba(0, 0, 0, 0.23) !important;
+  background-color: transparent !important;
+  font-family: inherit !important;
+  padding-left: 58px !important;
+  transition: border-color 0.2s ease !important;
+  color: #000 !important; /* Text color */
+}
+
+.react-tel-input .form-control:hover {
+  border-color: rgba(0, 0, 0, 0.87) !important;
+}
+
+.react-tel-input .form-control:focus {
+  border-color: #1976d2 !important; /* Primary color to match MUI focus */
+  box-shadow: 0 0 0 1px #1976d2 !important; /* Primary color outline */
+}
+
+.react-tel-input .flag-dropdown {
+  background-color: transparent !important;
+  border: none !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.23) !important;
+  border-radius: 4px 0 0 4px !important;
+}
+
+.react-tel-input .flag-dropdown:hover,
+.react-tel-input .flag-dropdown.open {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+.react-tel-input .selected-flag {
+  width: 52px !important;
+  height: 54px !important;
+  padding: 0 0 0 11px !important;
+  border-radius: 4px 0 0 4px !important;
+}
+
+.react-tel-input .selected-flag .arrow {
+  left: 29px !important;
+}
+
+/* Style for country dropdown */
+.react-tel-input .country-list {
+  width: 300px !important;
+  max-height: 200px !important;
+  border-radius: 4px !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
+  margin-top: 8px !important;
+}
+
+/* Style for the floating label effect */
+.phone-field-container {
+  position: relative;
+  margin: 16px 0;
+}
+
+.phone-field-label {
+  position: absolute;
+  top: -8px;
+  left: 12px;
+  padding: 0 5px;
+  background-color: white;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.6);
+  z-index: 1;
+}
+
+/* Style for the search field */
+.react-tel-input .search-box {
+  width: 100% !important;
+  margin-left: 0 !important;
+  border-radius: 4px !important;
+  border: 1px solid rgba(0, 0, 0, 0.23) !important;
+  font-size: 0.9rem !important;
+  padding: 10px !important;
+  background-color: #f5f5f5 !important; /* Light gray background */
+  color: #000 !important; /* Black text color */
+}
+
+.react-tel-input .search-box:focus {
+  border-color: #1976d2 !important;
+  box-shadow: 0 0 0 1px #1976d2 !important;
+}
+
+/* Style for the clear button (X icon) in search box */
+.react-tel-input .search-box + .search-box-close {
+  color: #000 !important; /* Black color for the X icon */
+}
+
+/* Country search results highlighting */
+.react-tel-input .country-list .search-emoji {
+  display: none;
+}
+
+.react-tel-input .country-list .country.highlight {
+  background-color: rgba(25, 118, 210, 0.1) !important; /* Light primary color */
+}
+
+.react-tel-input .country-list .country:hover {
+  background-color: rgba(25, 118, 210, 0.05) !important;
+}
+
+/* Additional styles for the search functionality */
+.react-tel-input .country-list .country-name .highlight {
+  color: #000 !important; /* Black highlighted text in search results */
+  font-weight: bold !important;
+}
+
+/* Style for the clear search button */
+.react-tel-input .search-box-close {
+  color: #000 !important; /* Black color for X icon */
+}
+
+/* Ensure the search box text is black */
+.react-tel-input .search-box::placeholder {
+  color: rgba(0, 0, 0, 0.5) !important; /* Slightly transparent black for placeholder */
+}
+
+/* NEW STYLES FOR SEARCH HIGHLIGHTING */
+
+/* Change search result highlight color */
+.react-tel-input .country-list .country.highlight {
+  background-color: #f0f0f0 !important; /* Light gray background instead of blue */
+}
+
+/* Style for matching text in search results */
+.react-tel-input .country-list .country-name .highlight {
+  color: #000 !important; /* Black color for highlighted text */
+  font-weight: bold !important;
+}
+
+/* Making the country name more prominent */
+.react-tel-input .country-list .country-name {
+  color: #000 !important; /* Black text for country names */
+  font-size: 14px !important;
+}
+
+/* Style for dial code in dropdown */
+.react-tel-input .country-list .dial-code {
+  color: #000 !important; /* Black text for dial codes */
+}
+
+/* Improving search input style */
+.react-tel-input .search-box {
+  padding: 12px !important;
+  margin-bottom: 8px !important;
+  border-bottom: 2px solid #e0e0e0 !important;
+  color: #000 !important; /* Black text in search box */
+}
+
+/* Add a subtle hover effect for better UX */
+.react-tel-input .country-list .country:hover {
+  background-color: #f0f0f0 !important; /* Light gray on hover */
+}
+
+/* Improved scrollbar for the dropdown */
+.react-tel-input .country-list::-webkit-scrollbar {
+  width: 8px !important;
+}
+
+.react-tel-input .country-list::-webkit-scrollbar-track {
+  background: #f1f1f1 !important;
+  border-radius: 4px !important;
+}
+
+.react-tel-input .country-list::-webkit-scrollbar-thumb {
+  background: #c1c1c1 !important;
+  border-radius: 4px !important;
+}
+
+.react-tel-input .country-list::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8 !important;
+}

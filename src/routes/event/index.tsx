@@ -1,0 +1,635 @@
+import { useState } from "react"
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Container,
+  Box,
+  Card,
+  CardContent,
+  CardMedia,
+  Grid,
+  Chip,
+  InputBase,
+  IconButton,
+  Avatar,
+  Button,
+  Divider,
+  useTheme,
+  useMediaQuery,
+  Paper,
+} from "@mui/material"
+
+import { createFileRoute, Link } from '@tanstack/react-router';
+
+
+import { Search, ChevronLeft, ChevronRight, MapPin, Calendar } from "lucide-react";
+
+import { ThemeProvider } from "@/components/theme-provider"
+import { useEvents } from '~/hooks/event/useProducts';
+
+// Mock data for events
+const events = [
+  {
+    id: 1,
+    title: "DevFest Vientiane 2022",
+    date: "10 ສິງຫາ 2022",
+    time: "09:00-16:30",
+    location: "ສູນການຮຽນຮູ້ໄອຊີທີ ແລະ ບໍລິການ (ICTC)",
+    image: "/placeholder.svg?height=200&width=300",
+  },
+]
+
+// Mock data for past events (duplicate of events for demo)
+const pastEvents = [...events]
+
+// Mock data for categories
+const categories = [
+  { id: 1, name: "ທັງໝົດ", active: true },
+  { id: 2, name: "ການສຶກສາ", active: false },
+  { id: 3, name: "ສັມມະນາ", active: false },
+  { id: 4, name: "ເທດສະການ", active: false },
+  { id: 5, name: "ສິລະປະ", active: false },
+  { id: 6, name: "ກິລາ", active: false },
+  { id: 7, name: "ການແຂ່ງຂັນ", active: false },
+  { id: 8, name: "ສະແດງ ແລະ ບັນເທີງ", active: false },
+]
+
+// Mock data for sponsors
+const sponsors = [
+  { id: 1, name: "Indee", logo: "/placeholder.svg?height=40&width=80" },
+  { id: 2, name: "Heineken", logo: "/placeholder.svg?height=40&width=80" },
+  { id: 3, name: "Bitqik", logo: "/placeholder.svg?height=40&width=80" },
+  { id: 4, name: "LDB Bank", logo: "/placeholder.svg?height=40&width=80" },
+  { id: 5, name: "Sponsor 5", logo: "/placeholder.svg?height=40&width=80" },
+  { id: 6, name: "Sponsor 6", logo: "/placeholder.svg?height=40&width=80" },
+]
+
+export const Route = createFileRoute('/event/')({
+  component: RouteComponent,
+})
+
+function RouteComponent() {
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
+  const [activeCategory, setActiveCategory] = useState(1)
+
+  const { productsData } = useEvents()
+
+  return (
+    <ThemeProvider>
+      <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+        {/* App Bar */}
+        <AppBar position="static" sx={{ backgroundColor: "#0f172a" }}>
+          <Toolbar>
+            <Typography
+              variant="h6"
+              component="div"
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                color: "#10b981",
+                fontWeight: "bold",
+                flexGrow: 1,
+              }}
+            >
+              <Box component="span" sx={{ color: "white", mr: 0.5 }}>
+                e
+              </Box>
+              went.la
+            </Typography>
+
+            <Box
+              sx={{
+                display: "flex",
+                backgroundColor: "rgba(255,255,255,0.1)",
+                borderRadius: 1,
+                padding: "2px 8px",
+                width: isMobile ? "120px" : "240px",
+              }}
+            >
+              <Search size={20} color="#fff" />
+              <InputBase placeholder="ຄົ້ນຫາ..." sx={{ ml: 1, flex: 1, color: "white", fontSize: "0.9rem" }} />
+            </Box>
+
+            <Box sx={{ display: "flex", alignItems: "center", ml: 2 }}>
+              <Button
+                variant="text"
+                sx={{
+                  color: "white",
+                  textTransform: "none",
+                  fontSize: "0.8rem",
+                  mr: 1,
+                  display: { xs: "none", sm: "block" },
+                }}
+              >
+                ພາສາລາວ
+              </Button>
+              <Avatar
+                sx={{
+                  width: 32,
+                  height: 32,
+                  border: "2px solid white",
+                }}
+                alt="User Profile"
+                src="/placeholder.svg?height=32&width=32"
+              />
+            </Box>
+          </Toolbar>
+        </AppBar>
+
+        {/* Main Content */}
+        <Box component="main" sx={{ flexGrow: 1 }}>
+          {/* Hero Banner */}
+          <Box
+            sx={{
+              position: "relative",
+              backgroundColor: "#0f172a",
+              color: "white",
+              overflow: "hidden",
+            }}
+          >
+            <Container maxWidth="lg">
+              <Box
+                sx={{
+                  position: "relative",
+                  height: { xs: "180px", md: "220px" },
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Box sx={{ zIndex: 2, width: "100%", position: "relative" }}>
+                  <Typography
+                    variant="h3"
+                    component="h1"
+                    sx={{
+                      fontWeight: "bold",
+                      fontSize: { xs: "2rem", md: "3rem" },
+                    }}
+                  >
+                    devfest
+                  </Typography>
+                  <Typography variant="h5" sx={{ mt: 1 }}>
+                    Vientiane
+                  </Typography>
+
+                  <Box sx={{ mt: 2, display: "flex", alignItems: "center" }}>
+                    <Calendar size={16} />
+                    <Typography variant="body2" sx={{ ml: 1 }}>
+                      10 ສິງຫາ 2022
+                    </Typography>
+                    <Typography variant="body2" sx={{ ml: 1 }}>
+                      09:00-16:30
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ mt: 1, display: "flex", alignItems: "center" }}>
+                    <MapPin size={16} />
+                    <Typography variant="body2" sx={{ ml: 1 }}>
+                      ສູນການຮຽນຮູ້ໄອຊີທີ ແລະ ບໍລິການ (ICTC)
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Box
+                  sx={{
+                    position: "absolute",
+                    right: 0,
+                    top: 0,
+                    height: "100%",
+                    width: "40%",
+                    display: { xs: "none", md: "block" },
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src="/placeholder.svg?height=220&width=300"
+                    alt="Temple illustration"
+                    sx={{
+                      position: "absolute",
+                      right: 0,
+                      height: "100%",
+                      objectFit: "contain",
+                    }}
+                  />
+                </Box>
+
+                <IconButton
+                  sx={{
+                    position: "absolute",
+                    left: 0,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    backgroundColor: "rgba(0,0,0,0.3)",
+                    color: "white",
+                    "&:hover": {
+                      backgroundColor: "rgba(0,0,0,0.5)",
+                    },
+                  }}
+                >
+                  <ChevronLeft size={24} />
+                </IconButton>
+
+                <IconButton
+                  sx={{
+                    position: "absolute",
+                    right: 0,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    backgroundColor: "rgba(0,0,0,0.3)",
+                    color: "white",
+                    "&:hover": {
+                      backgroundColor: "rgba(0,0,0,0.5)",
+                    },
+                  }}
+                >
+                  <ChevronRight size={24} />
+                </IconButton>
+              </Box>
+            </Container>
+          </Box>
+
+          {/* Categories */}
+          <Box sx={{ backgroundColor: "#0f172a", py: 2 }}>
+            <Container maxWidth="lg">
+              <Box
+                sx={{
+                  display: "flex",
+                  overflowX: "auto",
+                  gap: 1,
+                  pb: 1,
+                  "&::-webkit-scrollbar": {
+                    display: "none",
+                  },
+                }}
+              >
+                {categories.map((category) => (
+                  <Chip
+                    key={category.id}
+                    label={category.name}
+                    onClick={() => setActiveCategory(category.id)}
+                    sx={{
+                      backgroundColor: category.id === activeCategory ? "#10b981" : "rgba(255,255,255,0.1)",
+                      color: "white",
+                      "&:hover": {
+                        backgroundColor: category.id === activeCategory ? "#10b981" : "rgba(255,255,255,0.2)",
+                      },
+                    }}
+                  />
+                ))}
+              </Box>
+            </Container>
+          </Box>
+
+          {/* Upcoming Events */}
+          <Box sx={{ backgroundColor: "#0f172a", py: 4 }}>
+            <Container maxWidth="lg">
+              <Typography
+                variant="h5"
+                component="h2"
+                sx={{
+                  color: "white",
+                  mb: 3,
+                  fontWeight: "bold",
+                }}
+              >
+                ອີເວັ້ນທີ່ສຸດ
+              </Typography>
+
+              <Grid container spacing={3}>
+                {productsData.map((event) => (
+                  <Grid item xs={12} sm={6} md={4} key={event.id}>
+                    <Link
+                      to="/shop/view/$productID/$categoryID"
+                      params={{
+                        productID: event.id ?? '',
+                        categoryID: event.category_id ?? '',
+                      }}
+                    >
+                      <Card
+                        sx={{
+                          height: "100%",
+                          display: "flex",
+                          flexDirection: "column",
+                          backgroundColor: "#1e293b",
+                          color: "white",
+                          borderRadius: 2,
+                          overflow: "hidden",
+                        }}
+                      >
+                        <CardMedia component="img" height="140" image={event.image_url} alt={event.name} />
+                        <CardContent sx={{ flexGrow: 1, p: 2 }}>
+                          <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                            <Calendar size={14} color="#9ca3af" />
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: "#9ca3af",
+                                ml: 0.5,
+                              }}
+                            >
+                              {event.created}
+                            </Typography>
+                          </Box>
+
+                          <Typography
+                            variant="subtitle1"
+                            component="h3"
+                            sx={{
+                              fontWeight: "bold",
+                              mb: 1,
+                              fontSize: "0.9rem",
+                              lineHeight: 1.3,
+                            }}
+                          >
+                            {event.name}
+                          </Typography>
+
+                          <Box sx={{ display: "flex", alignItems: "center" }}>
+                            <MapPin size={14} color="#9ca3af" />
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: "#9ca3af",
+                                ml: 0.5,
+                                fontSize: "0.75rem",
+                              }}
+                            >
+                              {event.price}
+                            </Typography>
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  </Grid>
+                ))}
+              </Grid>
+            </Container>
+          </Box>
+
+          {/* Past Events */}
+          <Box sx={{ backgroundColor: "#0f172a", py: 4 }}>
+            <Container maxWidth="lg">
+              <Typography
+                variant="h5"
+                component="h2"
+                sx={{
+                  color: "white",
+                  mb: 3,
+                  fontWeight: "bold",
+                }}
+              >
+                ອີເວັ້ນທີ່ຜ່ານມາແລ້ວ
+              </Typography>
+
+              <Grid container spacing={3}>
+                {pastEvents.map((event) => (
+                  <Grid item xs={12} sm={6} md={4} key={event.id}>
+                    <Card
+                      sx={{
+                        height: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                        backgroundColor: "#1e293b",
+                        color: "white",
+                        borderRadius: 2,
+                        overflow: "hidden",
+                      }}
+                    >
+                      <CardMedia component="img" height="140" image={event.image} alt={event.title} />
+                      <CardContent sx={{ flexGrow: 1, p: 2 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                          <Calendar size={14} color="#9ca3af" />
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: "#9ca3af",
+                              ml: 0.5,
+                            }}
+                          >
+                            {event.date}
+                          </Typography>
+                        </Box>
+
+                        <Typography
+                          variant="subtitle1"
+                          component="h3"
+                          sx={{
+                            fontWeight: "bold",
+                            mb: 1,
+                            fontSize: "0.9rem",
+                            lineHeight: 1.3,
+                          }}
+                        >
+                          {event.title}
+                        </Typography>
+
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          <MapPin size={14} color="#9ca3af" />
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: "#9ca3af",
+                              ml: 0.5,
+                              fontSize: "0.75rem",
+                            }}
+                          >
+                            {event.location}
+                          </Typography>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  mt: 4,
+                }}
+              >
+                <Button
+                  variant="outlined"
+                  endIcon={<ChevronRight size={16} />}
+                  sx={{
+                    color: "#10b981",
+                    borderColor: "#10b981",
+                    "&:hover": {
+                      borderColor: "#059669",
+                      backgroundColor: "rgba(16, 185, 129, 0.1)",
+                    },
+                  }}
+                >
+                  ເບິ່ງເພີ່ມເຕີມ
+                </Button>
+              </Box>
+            </Container>
+          </Box>
+
+          {/* Sponsors */}
+          <Box sx={{ backgroundColor: "#0f172a", py: 4, borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+            <Container maxWidth="lg">
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  color: "white",
+                  mb: 3,
+                  textAlign: "center",
+                }}
+              >
+                Trusted by
+              </Typography>
+
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  flexWrap: "wrap",
+                  gap: 4,
+                  mb: 4,
+                }}
+              >
+                {sponsors.map((sponsor) => (
+                  <Box
+                    key={sponsor.id}
+                    component="img"
+                    src={sponsor.logo}
+                    alt={sponsor.name}
+                    sx={{
+                      height: 40,
+                      filter: "brightness(0) invert(1)",
+                      opacity: 0.7,
+                      transition: "opacity 0.3s",
+                      "&:hover": {
+                        opacity: 1,
+                      },
+                    }}
+                  />
+                ))}
+              </Box>
+            </Container>
+          </Box>
+        </Box>
+
+        {/* Footer */}
+        <Box
+          component="footer"
+          sx={{
+            backgroundColor: "#10b981",
+            py: 4,
+            color: "#0f172a",
+          }}
+        >
+          <Container maxWidth="lg">
+            <Grid container spacing={4}>
+              <Grid item xs={12} md={6}>
+                <Typography
+                  variant="h6"
+                  component="div"
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    fontWeight: "bold",
+                    mb: 2,
+                  }}
+                >
+                  <Box component="span" sx={{ color: "white", mr: 0.5 }}>
+                    e
+                  </Box>
+                  went.la
+                </Typography>
+
+                <Typography variant="body2" sx={{ mb: 2 }}>
+                  Download the app by clicking the link below :
+                </Typography>
+
+                <Box sx={{ display: "flex", gap: 2 }}>
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 0.5,
+                      px: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      borderRadius: 1,
+                      backgroundColor: "#0f172a",
+                    }}
+                  >
+                    <Box
+                      component="img"
+                      src="/placeholder.svg?height=24&width=24"
+                      alt="Google Play"
+                      sx={{ height: 24, mr: 1 }}
+                    />
+                    <Box>
+                      <Typography variant="caption" sx={{ color: "white", display: "block", lineHeight: 1 }}>
+                        GET IT ON
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: "white", fontWeight: "bold", lineHeight: 1.2 }}>
+                        Google Play
+                      </Typography>
+                    </Box>
+                  </Paper>
+
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 0.5,
+                      px: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      borderRadius: 1,
+                      backgroundColor: "#0f172a",
+                    }}
+                  >
+                    <Box
+                      component="img"
+                      src="/placeholder.svg?height=24&width=24"
+                      alt="App Store"
+                      sx={{ height: 24, mr: 1 }}
+                    />
+                    <Box>
+                      <Typography variant="caption" sx={{ color: "white", display: "block", lineHeight: 1 }}>
+                        Download on the
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: "white", fontWeight: "bold", lineHeight: 1.2 }}>
+                        App Store
+                      </Typography>
+                    </Box>
+                  </Paper>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle1" sx={{ fontWeight: "bold", mb: 2 }}>
+                  Contact
+                </Typography>
+
+                <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                  <Typography variant="body2" sx={{ ml: 1 }}>
+                    +85620 55636450
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", alignItems: "flex-start", mb: 1 }}>
+                  <Typography variant="body2" sx={{ ml: 1 }}>
+                    UGD Media Co., Ltd. Wattnak, Sisattanak, Vientiane Capital, Laos.
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+
+            <Divider sx={{ my: 3, borderColor: "rgba(0,0,0,0.1)" }} />
+
+            <Typography variant="caption" sx={{ display: "block", textAlign: "center" }}>
+              Copyright © 2023 Lao IT Dev Co., Ltd. All Rights Reserved
+            </Typography>
+          </Container>
+        </Box>
+      </Box>
+    </ThemeProvider>
+  )
+}
