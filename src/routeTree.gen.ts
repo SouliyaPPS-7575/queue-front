@@ -18,10 +18,12 @@ import { Route as LoginImport } from './routes/login'
 import { Route as ForgotPasswordImport } from './routes/forgot-password'
 import { Route as IndexImport } from './routes/index'
 import { Route as ServiceIndexImport } from './routes/service/index'
+import { Route as QueueIndexImport } from './routes/queue/index'
 import { Route as EventIndexImport } from './routes/event/index'
 import { Route as ContactIndexImport } from './routes/contact/index'
 import { Route as AboutIndexImport } from './routes/about/index'
 import { Route as VerifyEmailEmailImport } from './routes/verify-email.$email'
+import { Route as QueueViewEventIDImport } from './routes/queue/view.$eventID'
 import { Route as EventViewEventIDImport } from './routes/event/view.$eventID'
 
 // Create/Update Routes
@@ -68,6 +70,12 @@ const ServiceIndexRoute = ServiceIndexImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+const QueueIndexRoute = QueueIndexImport.update({
+  id: '/queue/',
+  path: '/queue/',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const EventIndexRoute = EventIndexImport.update({
   id: '/event/',
   path: '/event/',
@@ -89,6 +97,12 @@ const AboutIndexRoute = AboutIndexImport.update({
 const VerifyEmailEmailRoute = VerifyEmailEmailImport.update({
   id: '/verify-email/$email',
   path: '/verify-email/$email',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const QueueViewEventIDRoute = QueueViewEventIDImport.update({
+  id: '/queue/view/$eventID',
+  path: '/queue/view/$eventID',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -172,6 +186,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventIndexImport
       parentRoute: typeof rootRoute
     }
+    '/queue/': {
+      id: '/queue/'
+      path: '/queue'
+      fullPath: '/queue'
+      preLoaderRoute: typeof QueueIndexImport
+      parentRoute: typeof rootRoute
+    }
     '/service/': {
       id: '/service/'
       path: '/service'
@@ -184,6 +205,13 @@ declare module '@tanstack/react-router' {
       path: '/event/view/$eventID'
       fullPath: '/event/view/$eventID'
       preLoaderRoute: typeof EventViewEventIDImport
+      parentRoute: typeof rootRoute
+    }
+    '/queue/view/$eventID': {
+      id: '/queue/view/$eventID'
+      path: '/queue/view/$eventID'
+      fullPath: '/queue/view/$eventID'
+      preLoaderRoute: typeof QueueViewEventIDImport
       parentRoute: typeof rootRoute
     }
   }
@@ -202,8 +230,10 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutIndexRoute
   '/contact': typeof ContactIndexRoute
   '/event': typeof EventIndexRoute
+  '/queue': typeof QueueIndexRoute
   '/service': typeof ServiceIndexRoute
   '/event/view/$eventID': typeof EventViewEventIDRoute
+  '/queue/view/$eventID': typeof QueueViewEventIDRoute
 }
 
 export interface FileRoutesByTo {
@@ -217,8 +247,10 @@ export interface FileRoutesByTo {
   '/about': typeof AboutIndexRoute
   '/contact': typeof ContactIndexRoute
   '/event': typeof EventIndexRoute
+  '/queue': typeof QueueIndexRoute
   '/service': typeof ServiceIndexRoute
   '/event/view/$eventID': typeof EventViewEventIDRoute
+  '/queue/view/$eventID': typeof QueueViewEventIDRoute
 }
 
 export interface FileRoutesById {
@@ -233,53 +265,61 @@ export interface FileRoutesById {
   '/about/': typeof AboutIndexRoute
   '/contact/': typeof ContactIndexRoute
   '/event/': typeof EventIndexRoute
+  '/queue/': typeof QueueIndexRoute
   '/service/': typeof ServiceIndexRoute
   '/event/view/$eventID': typeof EventViewEventIDRoute
+  '/queue/view/$eventID': typeof QueueViewEventIDRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
-    | '/forgot-password'
-    | '/login'
-    | '/logout'
-    | '/profile'
-    | '/signup'
-    | '/verify-email/$email'
-    | '/about'
-    | '/contact'
-    | '/event'
-    | '/service'
-    | '/event/view/$eventID'
+  | '/'
+  | '/forgot-password'
+  | '/login'
+  | '/logout'
+  | '/profile'
+  | '/signup'
+  | '/verify-email/$email'
+  | '/about'
+  | '/contact'
+  | '/event'
+  | '/queue'
+  | '/service'
+  | '/event/view/$eventID'
+  | '/queue/view/$eventID'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
-    | '/forgot-password'
-    | '/login'
-    | '/logout'
-    | '/profile'
-    | '/signup'
-    | '/verify-email/$email'
-    | '/about'
-    | '/contact'
-    | '/event'
-    | '/service'
-    | '/event/view/$eventID'
+  | '/'
+  | '/forgot-password'
+  | '/login'
+  | '/logout'
+  | '/profile'
+  | '/signup'
+  | '/verify-email/$email'
+  | '/about'
+  | '/contact'
+  | '/event'
+  | '/queue'
+  | '/service'
+  | '/event/view/$eventID'
+  | '/queue/view/$eventID'
   id:
-    | '__root__'
-    | '/'
-    | '/forgot-password'
-    | '/login'
-    | '/logout'
-    | '/profile'
-    | '/signup'
-    | '/verify-email/$email'
-    | '/about/'
-    | '/contact/'
-    | '/event/'
-    | '/service/'
-    | '/event/view/$eventID'
+  | '__root__'
+  | '/'
+  | '/forgot-password'
+  | '/login'
+  | '/logout'
+  | '/profile'
+  | '/signup'
+  | '/verify-email/$email'
+  | '/about/'
+  | '/contact/'
+  | '/event/'
+  | '/queue/'
+  | '/service/'
+  | '/event/view/$eventID'
+  | '/queue/view/$eventID'
   fileRoutesById: FileRoutesById
 }
 
@@ -294,8 +334,10 @@ export interface RootRouteChildren {
   AboutIndexRoute: typeof AboutIndexRoute
   ContactIndexRoute: typeof ContactIndexRoute
   EventIndexRoute: typeof EventIndexRoute
+  QueueIndexRoute: typeof QueueIndexRoute
   ServiceIndexRoute: typeof ServiceIndexRoute
   EventViewEventIDRoute: typeof EventViewEventIDRoute
+  QueueViewEventIDRoute: typeof QueueViewEventIDRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -309,8 +351,10 @@ const rootRouteChildren: RootRouteChildren = {
   AboutIndexRoute: AboutIndexRoute,
   ContactIndexRoute: ContactIndexRoute,
   EventIndexRoute: EventIndexRoute,
+  QueueIndexRoute: QueueIndexRoute,
   ServiceIndexRoute: ServiceIndexRoute,
   EventViewEventIDRoute: EventViewEventIDRoute,
+  QueueViewEventIDRoute: QueueViewEventIDRoute,
 }
 
 export const routeTree = rootRoute
@@ -333,8 +377,10 @@ export const routeTree = rootRoute
         "/about/",
         "/contact/",
         "/event/",
+        "/queue/",
         "/service/",
-        "/event/view/$eventID"
+        "/event/view/$eventID",
+        "/queue/view/$eventID"
       ]
     },
     "/": {
@@ -367,11 +413,17 @@ export const routeTree = rootRoute
     "/event/": {
       "filePath": "event/index.tsx"
     },
+    "/queue/": {
+      "filePath": "queue/index.tsx"
+    },
     "/service/": {
       "filePath": "service/index.tsx"
     },
     "/event/view/$eventID": {
       "filePath": "event/view.$eventID.tsx"
+    },
+    "/queue/view/$eventID": {
+      "filePath": "queue/view.$eventID.tsx"
     }
   }
 }

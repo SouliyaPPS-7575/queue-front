@@ -2,8 +2,9 @@
 import { Box, Card, CardContent, Typography, Button, Chip, Stack, Container, Grid } from "@mui/material"
 import { CalendarToday, LocationOn, AttachMoney, People } from "@mui/icons-material"
 
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { useViewDetails } from "~/hooks/event/useViewDetails";
+
 
 export const Route = createFileRoute('/event/view/$eventID')({
   component: RouteComponent,
@@ -11,6 +12,7 @@ export const Route = createFileRoute('/event/view/$eventID')({
 
 
 function RouteComponent() {
+
   const { event } = useViewDetails()
   return (
     <Box
@@ -134,23 +136,32 @@ function RouteComponent() {
                 </Grid>
 
                 {/* Join Button */}
-                <Button
-                  variant="contained"
-                  fullWidth
-                  sx={{
-                    backgroundColor: "#4ade80",
-                    color: "white",
-                    py: 1.5,
-                    fontSize: "1.1rem",
-                    fontWeight: "bold",
-                    borderRadius: 2,
-                    "&:hover": {
-                      backgroundColor: "#22c55e",
-                    },
+
+                <Link
+                  to="/queue/view/$eventID"
+                  params={{
+                    eventID: event.id ?? '',
                   }}
                 >
-                  ຊື້ບັດ
-                </Button>
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    sx={{
+                      backgroundColor: "#4ade80",
+                      color: "white",
+                      py: 1.5,
+                      fontSize: "1.1rem",
+                      fontWeight: "bold",
+                      borderRadius: 2,
+                      "&:hover": {
+                        backgroundColor: "#22c55e",
+                      },
+                    }}
+                  >
+                    ຊື້ບັດ
+                  </Button>
+
+                </Link>
               </CardContent>
             </Card>
           </Grid>
