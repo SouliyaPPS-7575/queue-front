@@ -15,15 +15,17 @@ export const Route = createFileRoute('/queue/view/$eventID')({
 
 
 // Mock API functions (replace with actual API calls)
-const API_BASE = process.env.BASE_URL
+const API_BASE = process.env.BASE_URL + '/api/v1'
 
 const api = {
   getWaitingPageInfo: async (eventId) => {
-    // const token = localStorage.getItem('token');
+
+    const { token } = await getToken();
+    console.log("=> token", token)
 
     const response = await fetch(`${API_BASE}/events/${eventId}/waiting`, {
       headers: {
-        'Authorization': `Bearer ${getToken}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     });
@@ -57,9 +59,10 @@ const api = {
   },
 
   enterQueue: async ({ customerId, eventId }) => {
+    const { token } = await getToken();
     const response = await fetch(`${API_BASE}/queue/enter`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken}` },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({ customer_id: customerId, event_id: eventId }),
     });
     if (!response.ok) throw new Error('Failed to enter queue');
@@ -67,9 +70,10 @@ const api = {
   },
 
   getQueueStatus: async ({ customerId, eventId }) => {
+    const { token } = await getToken();
     const response = await fetch(`${API_BASE}/events/${eventId}/queue/status?customer_id=${customerId}`, {
       headers: {
-        'Authorization': `Bearer ${getToken}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     });
@@ -79,10 +83,11 @@ const api = {
   },
 
   lockSeat: async ({ customerId, eventId, seatId }) => {
+    const { token } = await getToken();
     const response = await fetch(`${API_BASE}/seats/lock`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${getToken}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ customer_id: customerId, event_id: eventId, seat_id: seatId }),
@@ -92,10 +97,11 @@ const api = {
   },
 
   booking: async ({ customerId, eventId }) => {
+    const { token } = await getToken();
     const response = await fetch(`${API_BASE}/events/${eventId}/book`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${getToken}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ customer_id: customerId, event_id: eventId }),

@@ -42,9 +42,11 @@ function RouteComponent() {
 
   const baseUrl = process.env.BASE_URL
 
+  // src={"http://localhost:8080/api/files/events/" + event.id + "/" + event.image_url}
+
   const imageSrc =
     `${baseUrl}/api/files/events/${event.id}/` +
-    (event.image_url?.[0] || '');
+    (event.image_url || '');
 
   return (
     <Box

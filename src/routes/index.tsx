@@ -313,7 +313,7 @@ function Home() {
                             <CardMedia
                               component="img"
                               height="140"
-                              image={"http://localhost:8080/api/files/events/" + event.id + "/" + event.image_url}
+                              image={process.env.BASE_URL + "/api/files/events/" + event.id + "/" + event.image_url}
                               sx={{
                                 aspectRatio: '4 / 5',
                                 width: '100%',
