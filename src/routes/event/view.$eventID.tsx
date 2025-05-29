@@ -11,9 +11,41 @@ export const Route = createFileRoute('/event/view/$eventID')({
 })
 
 
+interface Event {
+  collectionId: string;
+  collectionName: string;
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  category_id: string;
+  image_url: string[];
+  created: string;
+  updated: string;
+}
+
+
 function RouteComponent() {
 
-  const { event } = useViewDetails()
+  const { event }: { event: Event } = useViewDetails()
+
+
+  if (!event) {
+    return (
+      <Box sx={{ minHeight: "100vh", background: "linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)", py: 4 }}>
+        <Container maxWidth="lg">
+          <p>Loading event details...</p>
+        </Container>
+      </Box>
+    );
+  }
+
+  const baseUrl = process.env.BASE_URL
+
+  const imageSrc =
+    `${baseUrl}/api/files/events/${event.id}/` +
+    (event.image_url?.[0] || '');
+
   return (
     <Box
       sx={{
@@ -28,7 +60,7 @@ function RouteComponent() {
           <Grid item xs={12} md={5}>
             <Box
               component="img"
-              src={"http://localhost:8080/api/files/events/" + event.id + "/" + event.image_url}
+              src={imageSrc}
               alt="Rock x Rap Concert Poster"
               sx={{
                 width: "100%",

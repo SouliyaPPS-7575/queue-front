@@ -4,12 +4,10 @@ import {
   Logout,
   MenuRounded,
   SearchRounded,
-  ShoppingCartOutlined,
 } from '@mui/icons-material';
 import Profile from '@mui/icons-material/Person'; // Adjust the import path if necessary
 import {
   AppBar,
-  Badge,
   Box,
   Container,
   Dialog,
@@ -26,17 +24,17 @@ import {
   Typography,
   useMediaQuery,
 } from '@mui/material';
-import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
+import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import CurrencySelector from '~/components/CurrencySelector/CurrencySelector';
 import LanguageSelection from '~/components/LanguageSelection';
-import { useCountCartItems } from '~/hooks/event/useAddCart';
+// import { useCountCartItems } from '~/hooks/event/useAddCart';
 import { useAuthToken } from '~/hooks/useAuthToken';
 import { type NavItem, navItems } from '~/layout/navItems';
 import { NavbarProps } from '~/models/shop';
 import { getToken } from '~/server/auth';
-import { localStorageData } from '~/server/cache';
+// import { localStorageData } from '~/server/cache';
 import { StyledInputBase } from '~/styles/navbar';
 import theme from '~/styles/theme';
 
@@ -66,7 +64,7 @@ const Navbar = ({ currentPage, goToPage }: NavbarProps) => {
   const navigate = useNavigate();
 
   // Get cart items count using TanStack Query
-  const { data: countCartItems } = useCountCartItems();
+  // const { data: countCartItems } = useCountCartItems();
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -97,8 +95,7 @@ const Navbar = ({ currentPage, goToPage }: NavbarProps) => {
     }
   };
 
-  const adjustedPage = currentPath !== '/' ? 1 : currentPage;
-  const isTransparent = adjustedPage === 1;
+  // const adjustedPage = currentPath !== '/' ? 1 : currentPage;
 
   if (!shouldRender) {
     return null;
@@ -267,29 +264,28 @@ const Navbar = ({ currentPage, goToPage }: NavbarProps) => {
                 />
               </IconButton>
 
-              {/* Shopping cart */}
-              {localStorageData('token').getLocalStrage() ||
-                (localStorageData('customer_id').getLocalStrage() && (
-                  <Link to="/shop/add-cart" style={{ textDecoration: 'none' }}>
-                    <IconButton color="inherit">
-                      <Badge
-                        badgeContent={countCartItems}
-                        color="primary"
-                        sx={{
-                          '& .MuiBadge-badge': {
-                            color: '#ffffff',
-                            fontSize: '1rem',
-                          },
-                          ml: 1,
-                        }}
-                      >
-                        <ShoppingCartOutlined
-                          sx={{ color: 'white' }}
-                        />
-                      </Badge>
-                    </IconButton>
-                  </Link>
-                ))}
+              {/* {localStorageData('token').getLocalStrage() || */}
+              {/*   (localStorageData('customer_id').getLocalStrage() && ( */}
+              {/*     <Link to="/shop/add-cart" style={{ textDecoration: 'none' }}> */}
+              {/*       <IconButton color="inherit"> */}
+              {/*         <Badge */}
+              {/*           badgeContent={countCartItems} */}
+              {/*           color="primary" */}
+              {/*           sx={{ */}
+              {/*             '& .MuiBadge-badge': { */}
+              {/*               color: '#ffffff', */}
+              {/*               fontSize: '1rem', */}
+              {/*             }, */}
+              {/*             ml: 1, */}
+              {/*           }} */}
+              {/*         > */}
+              {/*           <ShoppingCartOutlined */}
+              {/*             sx={{ color: 'white' }} */}
+              {/*           /> */}
+              {/*         </Badge> */}
+              {/*       </IconButton> */}
+              {/*     </Link> */}
+              {/*   ))} */}
 
               {/* User account dropdown */}
               {!isMobile && (

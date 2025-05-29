@@ -19,7 +19,6 @@ import { Route as ForgotPasswordImport } from './routes/forgot-password'
 import { Route as IndexImport } from './routes/index'
 import { Route as ServiceIndexImport } from './routes/service/index'
 import { Route as QueueIndexImport } from './routes/queue/index'
-import { Route as PubnubIndexImport } from './routes/pubnub/index'
 import { Route as EventIndexImport } from './routes/event/index'
 import { Route as ContactIndexImport } from './routes/contact/index'
 import { Route as AboutIndexImport } from './routes/about/index'
@@ -74,12 +73,6 @@ const ServiceIndexRoute = ServiceIndexImport.update({
 const QueueIndexRoute = QueueIndexImport.update({
   id: '/queue/',
   path: '/queue/',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const PubnubIndexRoute = PubnubIndexImport.update({
-  id: '/pubnub/',
-  path: '/pubnub/',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -193,13 +186,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventIndexImport
       parentRoute: typeof rootRoute
     }
-    '/pubnub/': {
-      id: '/pubnub/'
-      path: '/pubnub'
-      fullPath: '/pubnub'
-      preLoaderRoute: typeof PubnubIndexImport
-      parentRoute: typeof rootRoute
-    }
     '/queue/': {
       id: '/queue/'
       path: '/queue'
@@ -244,7 +230,6 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutIndexRoute
   '/contact': typeof ContactIndexRoute
   '/event': typeof EventIndexRoute
-  '/pubnub': typeof PubnubIndexRoute
   '/queue': typeof QueueIndexRoute
   '/service': typeof ServiceIndexRoute
   '/event/view/$eventID': typeof EventViewEventIDRoute
@@ -262,7 +247,6 @@ export interface FileRoutesByTo {
   '/about': typeof AboutIndexRoute
   '/contact': typeof ContactIndexRoute
   '/event': typeof EventIndexRoute
-  '/pubnub': typeof PubnubIndexRoute
   '/queue': typeof QueueIndexRoute
   '/service': typeof ServiceIndexRoute
   '/event/view/$eventID': typeof EventViewEventIDRoute
@@ -281,7 +265,6 @@ export interface FileRoutesById {
   '/about/': typeof AboutIndexRoute
   '/contact/': typeof ContactIndexRoute
   '/event/': typeof EventIndexRoute
-  '/pubnub/': typeof PubnubIndexRoute
   '/queue/': typeof QueueIndexRoute
   '/service/': typeof ServiceIndexRoute
   '/event/view/$eventID': typeof EventViewEventIDRoute
@@ -301,7 +284,6 @@ export interface FileRouteTypes {
     | '/about'
     | '/contact'
     | '/event'
-    | '/pubnub'
     | '/queue'
     | '/service'
     | '/event/view/$eventID'
@@ -318,7 +300,6 @@ export interface FileRouteTypes {
     | '/about'
     | '/contact'
     | '/event'
-    | '/pubnub'
     | '/queue'
     | '/service'
     | '/event/view/$eventID'
@@ -335,7 +316,6 @@ export interface FileRouteTypes {
     | '/about/'
     | '/contact/'
     | '/event/'
-    | '/pubnub/'
     | '/queue/'
     | '/service/'
     | '/event/view/$eventID'
@@ -354,7 +334,6 @@ export interface RootRouteChildren {
   AboutIndexRoute: typeof AboutIndexRoute
   ContactIndexRoute: typeof ContactIndexRoute
   EventIndexRoute: typeof EventIndexRoute
-  PubnubIndexRoute: typeof PubnubIndexRoute
   QueueIndexRoute: typeof QueueIndexRoute
   ServiceIndexRoute: typeof ServiceIndexRoute
   EventViewEventIDRoute: typeof EventViewEventIDRoute
@@ -372,7 +351,6 @@ const rootRouteChildren: RootRouteChildren = {
   AboutIndexRoute: AboutIndexRoute,
   ContactIndexRoute: ContactIndexRoute,
   EventIndexRoute: EventIndexRoute,
-  PubnubIndexRoute: PubnubIndexRoute,
   QueueIndexRoute: QueueIndexRoute,
   ServiceIndexRoute: ServiceIndexRoute,
   EventViewEventIDRoute: EventViewEventIDRoute,
@@ -399,7 +377,6 @@ export const routeTree = rootRoute
         "/about/",
         "/contact/",
         "/event/",
-        "/pubnub/",
         "/queue/",
         "/service/",
         "/event/view/$eventID",
@@ -435,9 +412,6 @@ export const routeTree = rootRoute
     },
     "/event/": {
       "filePath": "event/index.tsx"
-    },
-    "/pubnub/": {
-      "filePath": "pubnub/index.tsx"
     },
     "/queue/": {
       "filePath": "queue/index.tsx"

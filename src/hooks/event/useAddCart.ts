@@ -50,11 +50,20 @@ export const useAddCart = () => {
   return { addCart };
 };
 
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  image_url: string[];
+}
+
 export function useCartPage() {
   const navigate = useNavigate();
 
   const { data: cartItem } = useSuspenseQuery(getCartItemsQueryOption());
-  const { productsData } = useEvents();
+
+  const { productsData }: { productsData: Product[] } = useEvents();
+
 
   const enrichedCartItems = useMemo(() => {
     return Array.from(

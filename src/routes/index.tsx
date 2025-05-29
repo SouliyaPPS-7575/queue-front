@@ -15,8 +15,6 @@ import {
   IconButton,
   Button,
   Divider,
-  useTheme,
-  useMediaQuery,
   Paper,
 } from "@mui/material"
 
@@ -115,8 +113,8 @@ function Home() {
     }
   };
 
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
+  // const theme = useTheme()
+  // const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
   const [activeCategory, setActiveCategory] = useState(1)
 
   const { events } = useEvents()

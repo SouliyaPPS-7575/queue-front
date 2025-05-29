@@ -11,7 +11,6 @@ import {
 import React from 'react';
 import { useCurrency } from '~/hooks/event/useCurrency';
 import { useCurrencyContext } from './CurrencyProvider';
-import { useRouterState } from '@tanstack/react-router';
 
 const CustomArrowDropDownIcon = ({ color }: { color: string }) => (
   <ArrowDropDownIcon sx={{ color, marginLeft: -9.5 }} />
