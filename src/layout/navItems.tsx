@@ -14,4 +14,5 @@ export const navItems: NavItem[] = [
   { name: 'event', page: 1, href: '/', icon: StorefrontOutlinedIcon },
   { name: 'service', page: 2, href: '/service', icon: ArticleOutlinedIcon },
   { name: 'contact', page: 3, href: '/contact', icon: MailOutlineIcon },
+  { name: 'chat', page: 4, href: '/pubnub', icon: MailOutlineIcon },
 ];

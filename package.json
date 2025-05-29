@@ -37,6 +37,7 @@
     "node-cache": "^5.1.2",
     "oxlint": "^0.16.2",
     "pocketbase": "^0.26.0",
+    "pubnub": "^9.5.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-i18next": "^15.4.1",
