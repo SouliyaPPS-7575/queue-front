@@ -185,7 +185,7 @@ function RouteComponent() {
                   textTransform: 'none',
                   fontSize: '1rem',
                   mt: 2,
-                  backgroundColor: '#081D3A', // Correct: Set background color using sx prop
+                  backgroundColor: '#0E1828E5', // Correct: Set background color using sx prop
                   color: 'white', // Optional: Set text color to ensure good contrast
                   '&:hover': {
                     backgroundColor: 'rgba(8,29,58,0.9)', // Optional: Add a hover effect for custom color

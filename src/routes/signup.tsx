@@ -358,6 +358,16 @@ function RouteComponent() {
                   )}
                 </form.Field>
 
+                {/* background: '#1CE9B6', */}
+                {/* borderRadius: '10px', */}
+                {/* color: '#F5F5F5', */}
+                {/* fontWeight: 'bold', */}
+                {/* padding: '8px 14px', */}
+                {/* '&:hover': { */}
+                {/*   // background: 'linear-gradient(45deg, #1CE9B6 32%, #1CE9B6 80%)', */}
+                {/*   background: '#F5F5F5', */}
+                {/* }, */}
+
                 <Button
                   type="submit"
                   variant="contained"
@@ -366,9 +376,9 @@ function RouteComponent() {
                     mt: 3,
                     mb: 2,
                     py: 1.5,
-                    bgcolor: '#64b5f6',
+                    bgcolor: '#081D3A',
                     '&:hover': {
-                      bgcolor: '#42a5f5',
+                      bgcolor: '#081D3A',
                     },
                     borderRadius: 1,
                     textTransform: 'none',

@@ -9,7 +9,8 @@ const theme = createTheme({
     success: { main: '#8BC34A' },
     background: {
       default: 'linear-gradient(to bottom right, #F5F5F5, #F3ECD8)',
-      paper: '#F3ECD8',
+      // paper: '#F3ECD8',
+      paper: '#FFF',
     },
     text: { primary: '#000', secondary: '#000' },
   },
@@ -57,13 +58,15 @@ const theme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          background: 'linear-gradient(45deg,#de9c69 10%, #C98B6B 90%)',
+          // background: 'linear-gradient(45deg,#de9c69 10%, #C98B6B 90%)',
+          background: '#1CE9B6',
           borderRadius: '10px',
           color: '#F5F5F5',
           fontWeight: 'bold',
           padding: '8px 14px',
           '&:hover': {
-            background: 'linear-gradient(45deg, #ab6936 30%, #C98B6B 90%)',
+            // background: 'linear-gradient(45deg, #1CE9B6 32%, #1CE9B6 80%)',
+            background: '#F5F5F5',
           },
         },
       },
