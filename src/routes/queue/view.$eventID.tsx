@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Clock, Users, CheckCircle, Lock, CreditCard, AlertCircle } from 'lucide-react';
+import { useRef } from 'react';
+import PubNub from 'pubnub';
+import { localStorageData } from '~/server/cache';
 
 import { createFileRoute } from '@tanstack/react-router'
 
@@ -29,10 +32,15 @@ const api = {
     return response.json();
   },
 
+  // Position          int  `json:"position"`
+  // EstimatedWaitTime int  `json:"estimated_wait_time_minutes"`
+  // CanProceed        bool `json:"can_proceed"`
+
   getQueueStatus: async ({ customerId, eventId }) => {
     const response = await fetch(`${API_BASE}/events/${eventId}/queue/status?customer_id=${customerId}`);
     if (!response.ok) throw new Error('Failed to get queue status');
     return response.json();
+    // return JSON.stringify({ can_proceed: false, position: 2, estimate_wait_time: 4 })
   },
 
   lockSeat: async ({ customerId, eventId, seatId }) => {
@@ -56,23 +64,96 @@ const api = {
   },
 };
 
-// Mock PubNub service (replace with actual PubNub integration)
-const usePubNub = (customerId, onMessage) => {
-  useEffect(() => {
-    // Mock PubNub subscription
-    const interval = setInterval(() => {
-      // Simulate receiving notifications
-      if (Math.random() > 0.95) {
-        onMessage({
-          type: 'proceed',
-          message: 'You can now select your tickets!',
-        });
-      }
-    }, 2000);
 
-    return () => clearInterval(interval);
+const usePubNub = (customerId, onMessage) => {
+  const pubnubRef = useRef(null);
+
+  useEffect(() => {
+    // Initialize PubNub
+    const pubnub = new PubNub({
+      publishKey: 'pub-c-299a157e-7974-497a-b889-80505c899ce8',
+      subscribeKey: 'sub-c-0f1fa40a-c489-11ec-a5a3-fed9c56767c0',
+      userId: customerId || 'anonymous-user',
+      // Optional: Add UUID for unique identification
+      // uuid: customerId,
+    });
+
+    pubnubRef.current = pubnub;
+
+    // Define the channel name (customize based on your needs)
+    const channelName = `customer-${customerId}`;
+    // Or use a general channel: const channelName = 'ticket-notifications';
+
+    // Set up message listener
+    const messageListener = {
+      message: (messageEvent) => {
+        console.log('=> PubNub message received:', messageEvent);
+
+        // Extract message data
+        const { message, channel, publisher } = messageEvent;
+
+        // Call the onMessage callback with the received data
+        onMessage({
+          type: message.type || 'notification',
+          message: message.text || message,
+          channel,
+          publisher,
+          timestamp: messageEvent.timetoken
+        });
+      },
+
+      // Optional: Handle presence events
+      presence: (presenceEvent) => {
+        console.log('PubNub presence event:', presenceEvent);
+      },
+
+      // Optional: Handle status events
+      status: (statusEvent) => {
+        console.log('PubNub status:', statusEvent);
+
+        if (statusEvent.category === 'PNConnectedCategory') {
+          console.log('Connected to PubNub');
+        } else if (statusEvent.category === 'PNNetworkDownCategory') {
+          console.log('Network is down');
+        } else if (statusEvent.category === 'PNNetworkUpCategory') {
+          console.log('Network is back up');
+        }
+      }
+    };
+
+    // Add listener
+    pubnub.addListener(messageListener);
+
+    // Subscribe to channel
+    pubnub.subscribe({
+      channels: [channelName],
+      withPresence: true // Optional: to track user presence
+    });
+
+    console.log(`Subscribed to PubNub channel: ${channelName}`);
+
+    // Cleanup function
+    return () => {
+      console.log('Cleaning up PubNub subscription');
+
+      // Unsubscribe from channels
+      pubnub.unsubscribe({
+        channels: [channelName]
+      });
+
+      // Remove listener
+      pubnub.removeListener(messageListener);
+
+      // Stop PubNub
+      pubnub.stop();
+    };
   }, [customerId, onMessage]);
+
+  // Return PubNub instance for manual operations if needed
+  return pubnubRef.current;
 };
+
+
 
 // Step 1: Waiting Page Component
 const WaitingPage = ({ eventId, customerId, onNext }) => {
@@ -166,12 +247,17 @@ const QueuePage = ({ eventId, customerId, onNext }) => {
     enabled: !!enterQueueMutation.isSuccess || enterQueueMutation.isIdle,
   });
 
-  // // Handle PubNub notifications
-  // usePubNub(customerId, (message) => {
-  //   if (message.type === 'proceed') {
-  //     onNext('tickets');
-  //   }
-  // });
+  usePubNub(customerId, (message) => {
+    console.log('=> Received notification:', message);
+
+    if (message.type === 'proceed') {
+      onNext('tickets');
+    } else if (message.type === 'queue_update') {
+      console.log('=> Queue update:', message.message);
+    } else if (message.type === 'error') {
+      console.error('=> Error notification:', message.message);
+    }
+  });
 
   useEffect(() => {
     if (!enterQueueMutation.isSuccess && !enterQueueMutation.isPending) {
@@ -181,8 +267,6 @@ const QueuePage = ({ eventId, customerId, onNext }) => {
 
   // Auto-proceed when queue status indicates ready
   useEffect(() => {
-    console.log("=> queue status: ", queueStatus)
-    console.log("=> can procedd: ", queueStatus?.can_proceed)
     if (queueStatus?.can_proceed) {
       console.log("=> step inside: ", queueStatus?.can_proceed)
       setTimeout(() => onNext('tickets'), 1000);
@@ -489,7 +573,7 @@ function RouteComponent() {
 
   // Mock data - replace with actual values
   const eventId = 'event-123';
-  const customerId = 'customer-456';
+  const customerId = localStorageData('customer_id').getLocalStrage()
 
   const handleNext = (step, data = null) => {
     if (data) setSelectedSeat(data);
