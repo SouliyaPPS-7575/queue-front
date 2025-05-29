@@ -4,6 +4,7 @@ import { Clock, Users, CheckCircle, Lock, CreditCard, AlertCircle } from 'lucide
 import { useRef } from 'react';
 import PubNub from 'pubnub';
 import { localStorageData } from '~/server/cache';
+// import { getToken } from '~/server/auth';
 
 import { createFileRoute } from '@tanstack/react-router'
 
@@ -12,12 +13,19 @@ export const Route = createFileRoute('/queue/view/$eventID')({
 })
 
 
+const getToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjb2xsZWN0aW9uSWQiOiJwYmNfMzE0MjkzMDMxMSIsImV4cCI6MTc0OTExMzY3MSwiaWQiOiJzYzh2Y3BqMDBmbGNqNTgiLCJyZWZyZXNoYWJsZSI6dHJ1ZSwidHlwZSI6ImF1dGgifQ.2HxbhPcq2lNPq3jAFjjyO4cJ56XD6JFqU_vsICCCuQY"
+
 // Mock API functions (replace with actual API calls)
-const API_BASE = 'http://localhost:8081/api/v1';
+const API_BASE = 'http://localhost:8080/api/v1';
 
 const api = {
   getWaitingPageInfo: async (eventId) => {
-    const response = await fetch(`${API_BASE}/events/${eventId}/waiting`);
+    const response = await fetch(`${API_BASE}/events/${eventId}/waiting`, {
+      headers: {
+        'Authorization': `Bearer ${getToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
     if (!response.ok) throw new Error('Failed to fetch waiting page info');
     return response.json();
   },
@@ -25,19 +33,20 @@ const api = {
   enterQueue: async ({ customerId, eventId }) => {
     const response = await fetch(`${API_BASE}/queue/enter`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken}` },
       body: JSON.stringify({ customer_id: customerId, event_id: eventId }),
     });
     if (!response.ok) throw new Error('Failed to enter queue');
     return response.json();
   },
 
-  // Position          int  `json:"position"`
-  // EstimatedWaitTime int  `json:"estimated_wait_time_minutes"`
-  // CanProceed        bool `json:"can_proceed"`
-
   getQueueStatus: async ({ customerId, eventId }) => {
-    const response = await fetch(`${API_BASE}/events/${eventId}/queue/status?customer_id=${customerId}`);
+    const response = await fetch(`${API_BASE}/events/${eventId}/queue/status?customer_id=${customerId}`, {
+      headers: {
+        'Authorization': `Bearer ${getToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
     if (!response.ok) throw new Error('Failed to get queue status');
     return response.json();
     // return JSON.stringify({ can_proceed: false, position: 2, estimate_wait_time: 4 })
@@ -46,7 +55,10 @@ const api = {
   lockSeat: async ({ customerId, eventId, seatId }) => {
     const response = await fetch(`${API_BASE}/seats/lock`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Authorization': `Bearer ${getToken}`,
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({ customer_id: customerId, event_id: eventId, seat_id: seatId }),
     });
     if (!response.ok) throw new Error('Failed to lock seat');
@@ -56,7 +68,10 @@ const api = {
   booking: async ({ customerId, eventId }) => {
     const response = await fetch(`${API_BASE}/events/${eventId}/book`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Authorization': `Bearer ${getToken}`,
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({ customer_id: customerId, event_id: eventId }),
     });
     if (!response.ok) throw new Error('Failed to lock seat');

@@ -22,6 +22,7 @@ export const loginServer = createServerFn({ method: 'POST' })
 
       const farFutureDate = new Date();
       farFutureDate.setFullYear(farFutureDate.getFullYear() + 20);
+      console.log("=> token:", authData.token)
 
       setCookie('token', authData.token, {
         sameSite: 'lax',
