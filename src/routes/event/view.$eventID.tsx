@@ -1,6 +1,8 @@
 
 import { Box, Card, CardContent, Typography, Button, Chip, Stack, Container, Grid } from "@mui/material"
 import { CalendarToday, LocationOn, AttachMoney, People } from "@mui/icons-material"
+import { getToken } from '~/server/auth';
+import { useRouter } from '@tanstack/react-router';
 
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useViewDetails } from "~/hooks/event/useViewDetails";
@@ -25,9 +27,23 @@ interface Event {
 }
 
 
+
 function RouteComponent() {
 
   const { event }: { event: Event } = useViewDetails()
+
+  const router = useRouter();
+
+  const handleBuyTicket = async () => {
+    const { token } = await getToken(); // make sure getToken() returns a Promise
+    if (token) {
+      router.navigate({ to: `/queue/view/${event.id}` });
+    } else {
+      alert("ກະ​ລຸ​ນາ​ເຂົ້າ​ສູ່​ລະ​ບົບກ່ອນ​ທີ່​ຈະ​ຊື້​ບັດ");
+      // Optional: redirect to login
+      // router.navigate({ to: '/login' });
+    }
+  };
 
 
   if (!event) {
@@ -180,6 +196,7 @@ function RouteComponent() {
                   <Button
                     variant="contained"
                     fullWidth
+                    onClick={handleBuyTicket}
                     sx={{
                       backgroundColor: "#4ade80",
                       color: "white",
