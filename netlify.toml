@@ -10,4 +10,3 @@
   NODE_VERSION = "20.18.3"
   YARN_VERSION = "1.22.19"
   BASE_URL = "https://sensornode.shop"
-  WORKSPACE = "shops"
