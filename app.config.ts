@@ -96,7 +96,7 @@ export default defineConfig({
       }),
     ],
     define: {
-      'process.env.BASE_URL': JSON.stringify(env.BASE_URL),
+      'process.env.BASE_URL': JSON.stringify(env.BASE_URL ?? process.env.BASE_URL),
     },
 
     build: {

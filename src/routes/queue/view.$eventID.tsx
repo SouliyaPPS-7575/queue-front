@@ -15,7 +15,7 @@ export const Route = createFileRoute('/queue/view/$eventID')({
 
 
 // Mock API functions (replace with actual API calls)
-const API_BASE = process.env.BASE_URL + '/api/v1'
+const API_BASE = process.env.API_BASE ?? `${process.env.BASE_URL}/api/v1`
 
 const api = {
   getWaitingPageInfo: async (eventId: string) => {
