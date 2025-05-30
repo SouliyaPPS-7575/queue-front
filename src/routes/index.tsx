@@ -10,13 +10,13 @@ import {
   Card,
   CardContent,
   CardMedia,
-  Grid,
   Chip,
   IconButton,
   Button,
   Divider,
   Paper,
-} from "@mui/material"
+} from "@mui/material";
+import Grid from "@mui/material/Grid";
 
 import { createFileRoute, Link } from '@tanstack/react-router';
 
@@ -79,7 +79,7 @@ function Home() {
 
   const [currentPage, setCurrentPage] = useState(0);
 
-  const [gridCols, setGridCols] = useState(2); // default to 2 columns
+  const [gridCols] = useState(2); // default to 2 columns
 
   // Handle page change
   const goToPage = (pageNumber: number) => {
@@ -390,7 +390,7 @@ function Home() {
 
                   <Grid container spacing={3}>
                     {pastEvents.map((event) => (
-                      <Grid item xs={12} sm={6} md={4} key={event.id}>
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={event.id}>
                         <Card
                           sx={{
                             height: "100%",
@@ -530,7 +530,7 @@ function Home() {
             >
               <Container maxWidth="lg">
                 <Grid container spacing={4}>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Typography
                       variant="h6"
                       component="div"
@@ -608,7 +608,7 @@ function Home() {
                     </Box>
                   </Grid>
 
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Typography variant="subtitle1" sx={{ fontWeight: "bold", mb: 2 }}>
                       Contact
                     </Typography>

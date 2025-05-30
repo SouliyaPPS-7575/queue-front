@@ -62,7 +62,7 @@ export function useCartPage() {
 
   const { data: cartItem } = useSuspenseQuery(getCartItemsQueryOption());
 
-  const { productsData }: { productsData: Product[] } = useEvents();
+  const { events: productsData }: { events: Product[] } = useEvents();
 
 
   const enrichedCartItems = useMemo(() => {
@@ -225,7 +225,7 @@ export function useCartPage() {
   };
 
   const handleCheckout = () => {
-    navigate({ to: '/shop/checkout' });
+    navigate({ to: '/queue' });
   };
 
   return {

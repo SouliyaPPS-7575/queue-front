@@ -18,7 +18,7 @@ export const Route = createFileRoute('/queue/view/$eventID')({
 const API_BASE = process.env.BASE_URL + '/api/v1'
 
 const api = {
-  getWaitingPageInfo: async (eventId) => {
+  getWaitingPageInfo: async (eventId: string) => {
 
     const { token } = await getToken();
     console.log("=> token", token)
@@ -58,7 +58,7 @@ const api = {
     }
   },
 
-  enterQueue: async ({ customerId, eventId }) => {
+  enterQueue: async ({ customerId, eventId }: { customerId: string; eventId: string }) => {
     const { token } = await getToken();
     const response = await fetch(`${API_BASE}/queue/enter`, {
       method: 'POST',
@@ -69,7 +69,7 @@ const api = {
     return response.json();
   },
 
-  getQueueStatus: async ({ customerId, eventId }) => {
+  getQueueStatus: async ({ customerId, eventId }: { customerId: string; eventId: string }) => {
     const { token } = await getToken();
     const response = await fetch(`${API_BASE}/events/${eventId}/queue/status?customer_id=${customerId}`, {
       headers: {
@@ -82,7 +82,7 @@ const api = {
     // return JSON.stringify({ can_proceed: false, position: 2, estimate_wait_time: 4 })
   },
 
-  lockSeat: async ({ customerId, eventId, seatId }) => {
+  lockSeat: async ({ customerId, eventId, seatId }: { customerId: string; eventId: string; seatId: string }) => {
     const { token } = await getToken();
     const response = await fetch(`${API_BASE}/seats/lock`, {
       method: 'POST',
@@ -96,7 +96,7 @@ const api = {
     return response.json();
   },
 
-  booking: async ({ customerId, eventId }) => {
+  booking: async ({ customerId, eventId }: { customerId: string; eventId: string }) => {
     const { token } = await getToken();
     const response = await fetch(`${API_BASE}/events/${eventId}/book`, {
       method: 'POST',
@@ -112,8 +112,8 @@ const api = {
 };
 
 
-const usePubNub = (customerId, onMessage) => {
-  const pubnubRef = useRef(null);
+const usePubNub = (customerId: string, onMessage: (message: any) => void) => {
+  const pubnubRef = useRef<PubNub | null>(null);
 
   useEffect(() => {
     // Initialize PubNub
@@ -133,7 +133,7 @@ const usePubNub = (customerId, onMessage) => {
 
     // Set up message listener
     const messageListener = {
-      message: (messageEvent) => {
+message: (messageEvent: any) => {
         console.log('=> PubNub message received:', messageEvent);
 
         // Extract message data
@@ -150,12 +150,12 @@ const usePubNub = (customerId, onMessage) => {
       },
 
       // Optional: Handle presence events
-      presence: (presenceEvent) => {
+presence: (presenceEvent: any) => {
         console.log('PubNub presence event:', presenceEvent);
       },
 
       // Optional: Handle status events
-      status: (statusEvent) => {
+status: (statusEvent: any) => {
         console.log('PubNub status:', statusEvent);
 
         if (statusEvent.category === 'PNConnectedCategory') {
@@ -203,7 +203,13 @@ const usePubNub = (customerId, onMessage) => {
 
 
 // Step 1: Waiting Page Component
-const WaitingPage = ({ eventId, customerId, onNext }) => {
+const WaitingPage = ({
+  eventId,
+  onNext,
+}: {
+  eventId: string;
+  onNext: (step: string) => void;
+}) => {
   const [countdown, setCountdown] = useState(0);
 
   const { data: waitingInfo, isLoading } = useQuery({
@@ -222,7 +228,7 @@ const WaitingPage = ({ eventId, customerId, onNext }) => {
     }
   }, [waitingInfo?.countdown_seconds]);
 
-  const formatTime = (seconds) => {
+  const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
@@ -277,13 +283,21 @@ const WaitingPage = ({ eventId, customerId, onNext }) => {
 };
 
 // Step 2: Queue Page Component
-const QueuePage = ({ eventId, customerId, onNext }) => {
+const QueuePage = ({
+  eventId,
+  customerId,
+  onNext,
+}: {
+  eventId: string;
+  customerId: string;
+  onNext: (step: string) => void;
+}) => {
   const queryClient = useQueryClient();
 
   const enterQueueMutation = useMutation({
     mutationFn: api.enterQueue,
     onSuccess: () => {
-      queryClient.invalidateQueries(['queueStatus']);
+      queryClient.invalidateQueries({ queryKey: ['queueStatus'] });
     },
   });
 
@@ -370,11 +384,19 @@ const QueuePage = ({ eventId, customerId, onNext }) => {
 };
 
 // Step 3: Ticket Selection Page Component
-const TicketSelectionPage = ({ eventId, customerId, onNext }) => {
-  const [selectedSeat, setSelectedSeat] = useState(null);
-  const [lockTimer, setLockTimer] = useState(null);
+const TicketSelectionPage = ({
+  eventId,
+  customerId,
+  onNext,
+}: {
+  eventId: string;
+  customerId: string;
+  onNext: (step: string) => void;
+}) => {
+  const [selectedSeat, setSelectedSeat] = useState<{ id: string; row: string; number: number; price: number; available: boolean } | null>(null);
+  const [lockTimer, setLockTimer] = useState<number | null>(null);
 
-  const seats = [
+  const seats: { id: string; row: string; number: number; price: number; available: boolean }[] = [
     { id: 'A1', row: 'A', number: 1, price: 100, available: true },
     { id: 'A2', row: 'A', number: 2, price: 100, available: true },
     { id: 'A3', row: 'A', number: 3, price: 100, available: false },
@@ -407,7 +429,7 @@ const TicketSelectionPage = ({ eventId, customerId, onNext }) => {
     }
   }, [lockTimer]);
 
-  const handleSeatSelect = (seat) => {
+  const handleSeatSelect = (seat: { id: string; row: string; number: number; price: number; available: boolean }) => {
     if (!seat.available) return;
     setSelectedSeat(seat);
     lockSeatMutation.mutate({
@@ -417,15 +439,12 @@ const TicketSelectionPage = ({ eventId, customerId, onNext }) => {
     });
   };
 
-  const handleSubmit = (seat) => {
-    submitMutation.mutate({
-      customerId,
-      eventId,
-    });
-    onNext('payment')
+  const handleSubmit = () => {
+    submitMutation.mutate({ customerId, eventId });
+    onNext('payment');
   };
 
-  const formatLockTime = (seconds) => {
+  const formatLockTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
@@ -515,7 +534,7 @@ const TicketSelectionPage = ({ eventId, customerId, onNext }) => {
 
           {/* Action Button */}
           <button
-            onClick={() => handleSubmit(seats)}
+            onClick={handleSubmit}
             disabled={!selectedSeat || lockSeatMutation.isPending}
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-4 px-6 rounded-lg font-semibold text-lg transition-colors"
           >
@@ -528,7 +547,7 @@ const TicketSelectionPage = ({ eventId, customerId, onNext }) => {
 };
 
 // Step 4: Payment Page Component
-const PaymentPage = ({ eventId, customerId, selectedSeat }) => {
+const PaymentPage = () => {
   const [qrCode] = useState('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2ZmZiIvPjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0iY2VudHJhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzMzMyI+TW9jayBRUiBDb2RlPC90ZXh0Pjwvc3ZnPg==');
   const [paymentStatus, setPaymentStatus] = useState('pending'); // pending, processing, success, failed
 
@@ -616,28 +635,26 @@ const PaymentPage = ({ eventId, customerId, selectedSeat }) => {
 // Main App Component
 function RouteComponent() {
   const [currentStep, setCurrentStep] = useState('waiting');
-  const [selectedSeat, setSelectedSeat] = useState(null);
 
   // Mock data - replace with actual values
   const eventId = 'event-123';
   const customerId = localStorageData('customer_id').getLocalStrage()
 
-  const handleNext = (step, data = null) => {
-    if (data) setSelectedSeat(data);
+  const handleNext = (step: string) => {
     setCurrentStep(step);
   };
 
   switch (currentStep) {
     case 'waiting':
-      return <WaitingPage eventId={eventId} customerId={customerId} onNext={handleNext} />;
+      return <WaitingPage eventId={eventId} onNext={handleNext} />;
     case 'queue':
       return <QueuePage eventId={eventId} customerId={customerId} onNext={handleNext} />;
     case 'tickets':
       return <TicketSelectionPage eventId={eventId} customerId={customerId} onNext={handleNext} />;
     case 'payment':
-      return <PaymentPage eventId={eventId} customerId={customerId} selectedSeat={selectedSeat} />;
+      return <PaymentPage />;
     default:
-      return <WaitingPage eventId={eventId} customerId={customerId} onNext={handleNext} />;
+      return <WaitingPage eventId={eventId} onNext={handleNext} />;
   }
 };
 

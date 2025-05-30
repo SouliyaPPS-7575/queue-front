@@ -1,25 +1,27 @@
 import { useEvents } from '~/hooks/event/useProducts';
 import { useRanking } from '~/hooks/event/useRanking';
-export const useProductsSection = () => {
-  const { productsData } = useEvents();
+import type { ProductItem, ProductRankingItem } from '~/models/shop';
 
-  const { productsRankingData } = useRanking();
+export const useProductsSection = () => {
+  const { events: productsData } = useEvents();
+  const { productsRankingData = [], isLoading } = useRanking();
 
   // create function filter products by ranking refer from ranking.rank
   const filteredProductsRanking = productsRankingData
-    .filter((ranking) => ranking?.rank <= 100)
-    .sort((a, b) => a?.rank - b?.rank) // Sort by rank ascending
-    .map((ranking) => {
+    .filter((ranking: ProductRankingItem) => ranking.rank <= 100)
+    .sort((a: ProductRankingItem, b: ProductRankingItem) => a.rank - b.rank)
+    .map((ranking: ProductRankingItem) => {
       const product = productsData.find(
-        (product) => product?.id === ranking?.product_id,
+        (product: ProductItem) => product.id === ranking.product_id,
       );
       return {
         ...product,
-        rank: ranking?.rank,
+        rank: ranking.rank,
       };
     });
 
   return {
     filteredProductsRanking,
+    isLoading,
   };
 };

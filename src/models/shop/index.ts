@@ -22,6 +22,8 @@ export interface ProductItem {
   image_url: string[];
   created: string;
   updated: string;
+  entance_date: string;
+  location: string;
 }
 
 export interface ProductRankingItem {

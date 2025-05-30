@@ -1,6 +1,7 @@
 
-import { Box, Card, CardContent, Typography, Button, Chip, Stack, Container, Grid } from "@mui/material"
-import { CalendarToday, LocationOn, AttachMoney, People } from "@mui/icons-material"
+import { Box, Card, CardContent, Typography, Button, Chip, Stack, Container } from "@mui/material";
+import Grid from "@mui/material/Grid";
+import { CalendarToday, LocationOn, AttachMoney, People } from "@mui/icons-material";
 import { getToken } from '~/server/auth';
 import { useRouter } from '@tanstack/react-router';
 
@@ -24,6 +25,8 @@ interface Event {
   image_url: string[];
   created: string;
   updated: string;
+  entance_date?: string;
+  location?: string;
 }
 
 
@@ -75,7 +78,7 @@ function RouteComponent() {
       <Container maxWidth="lg">
         <Grid container spacing={4} alignItems="center" mt={10}>
           {/* Concert Poster */}
-          <Grid item xs={12} md={5}>
+          <Grid size={{ xs: 12, md: 5 }}>
             <Box
               component="img"
               src={imageSrc}
@@ -90,7 +93,7 @@ function RouteComponent() {
           </Grid>
 
           {/* Event Details */}
-          <Grid item xs={12} md={7}>
+          <Grid size={{ xs: 12, md: 7 }}>
             <Card
               sx={{
                 backgroundColor: "rgba(255,255,255,0.05)",
@@ -148,7 +151,7 @@ function RouteComponent() {
 
                 {/* Price and Attendees */}
                 <Grid container spacing={3} sx={{ mb: 4 }}>
-                  <Grid item xs={6}>
+                  <Grid size={6}>
                     <Box
                       sx={{
                         p: 2,
@@ -167,7 +170,7 @@ function RouteComponent() {
                     </Box>
                   </Grid>
 
-                  <Grid item xs={6}>
+                  <Grid size={6}>
                     <Box
                       sx={{
                         p: 2,
