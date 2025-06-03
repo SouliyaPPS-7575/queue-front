@@ -103,7 +103,7 @@ function RouteComponent() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 mt-20">
       {/* Progress indicator */}
       <BookingProgressBar currentStep={currentStep} />
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import QRCode from 'react-qr-code';
 import PubNub from 'pubnub';
+import { getToken } from '~/server/auth';
 
 // Types
 interface PaymentPageProps {
@@ -37,11 +38,14 @@ const API_BASE = process.env.API_BASE ?? `${process.env.BASE_URL}/api/v1`;
 // API Functions
 const paymentAPI = {
   generateQR: async (data: GenerateQRRequest): Promise<GenerateQRResponse> => {
+
+    const { token } = await getToken();
+
     const response = await fetch(`${API_BASE}/payment/gen-jdb-qr`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(data),
     });
@@ -55,11 +59,14 @@ const paymentAPI = {
   },
 
   cancelPayment: async (paymentId: string): Promise<CancelPaymentResponse> => {
+
+    const { token } = await getToken();
+
     const response = await fetch(`${API_BASE}/payment/${paymentId}/cancel`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        'Authorization': `Bearer ${token}`,
       },
     });
 
