@@ -115,7 +115,7 @@ export function useCartPage() {
   const selectedItemStorage = localStorageData('selected_cart_items');
 
   useEffect(() => {
-    const saved = selectedItemStorage.getLocalStrage();
+    const saved = selectedItemStorage.getLocalStorage();
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -205,7 +205,7 @@ export function useCartPage() {
           data: {
             id: item.id,
             formData: {
-              customer_id: localStorageData('customer_id').getLocalStrage(),
+              customer_id: localStorageData('customer_id').getLocalStorage(),
               product_id: item.product_id,
               quantity: item.quantity,
               status: item.status,

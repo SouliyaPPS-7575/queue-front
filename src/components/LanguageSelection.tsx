@@ -17,7 +17,7 @@ const CustomSelect = forwardRef<HTMLDivElement, SelectProps>((props, ref) => (
 function LanguageSelection() {
   const [language, setLanguage] = useState<string>(() => {
     if (typeof window !== 'undefined') {
-      return localStorageData('language').getLocalStrage() || 'la';
+      return localStorageData('language').getLocalStorage() || 'la';
     }
     return 'la';
   });

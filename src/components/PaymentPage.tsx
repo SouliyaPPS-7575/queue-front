@@ -1,42 +1,43 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import QRCode from 'react-qr-code';
+import PubNub from 'pubnub';
 
+// Types
 interface PaymentPageProps {
-  eventId: string;
-  sessionId: string;
-  paymentId?: string;
-  selectedSeat?: {
-    id: string;
-    row: string;
-    number: number;
-    price: number;
-  };
-  onNext: (step: string) => void;
+  bookId: string;
+  phone: string;
+  amount: string;
+  paymentId: string;
+  onSuccess: () => void;
+  onCancel: () => void;
 }
 
-interface SimulatePaymentRequest {
-  payment_id: string;
-  event_id: string;
-  session_id: string;
-  amount: number;
-  seat_ids: string[];
-  simulate_result: 'success' | 'failed'; // Add simulation result
+interface GenerateQRRequest {
+  book_id: string;
+  phone: string;
+  amount: string;
 }
 
-interface SimulatePaymentResponse {
+interface GenerateQRResponse {
+  code: string;
+  status: string;
+}
+
+interface CancelPaymentResponse {
   success: boolean;
-  payment_id: string;
   message: string;
-  status: 'success' | 'failed';
-  transaction_id?: string;
 }
+
+type PaymentStatus = 'loading' | 'pending' | 'success' | 'cancelled' | 'expired' | 'error';
+
 
 const API_BASE = process.env.API_BASE ?? `${process.env.BASE_URL}/api/v1`;
 
-// API function for simulating payment
-const api = {
-  simulatePayment: async (data: SimulatePaymentRequest): Promise<SimulatePaymentResponse> => {
-    const response = await fetch(`${API_BASE}/test/simulate-payment`, {
+// API Functions
+const paymentAPI = {
+  generateQR: async (data: GenerateQRRequest): Promise<GenerateQRResponse> => {
+    const response = await fetch(`${API_BASE}/api/v1/payment/gen-jdb-qr`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -47,7 +48,24 @@ const api = {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Payment simulation failed');
+      throw new Error(errorData.message || 'Failed to generate QR code');
+    }
+
+    return response.json();
+  },
+
+  cancelPayment: async (paymentId: string): Promise<CancelPaymentResponse> => {
+    const response = await fetch(`${API_BASE}/api/v1/payment/${paymentId}/cancel`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to cancel payment');
     }
 
     return response.json();
@@ -55,63 +73,142 @@ const api = {
 };
 
 const PaymentPage: React.FC<PaymentPageProps> = ({
-  eventId,
-  sessionId,
+  bookId,
+  phone,
+  amount,
   paymentId,
-  selectedSeat,
-  onNext,
+  onSuccess,
+  onCancel,
 }) => {
-  const [qrCode] = useState(
-    'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2ZmZiIvPjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0iY2VudHJhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzMzMyI+TW9jayBRUiBDb2RlPC90ZXh0Pjwvc3ZnPg=='
-  );
-
-  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'processing' | 'success' | 'failed'>('pending');
-  const [countdown, setCountdown] = useState(600); // 10 minutes countdown
+  // State
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>('loading');
+  const [qrCode, setQrCode] = useState<string>('');
+  const [countdown, setCountdown] = useState<number>(300); // 5 minutes = 300 seconds
   const [error, setError] = useState<string | null>(null);
 
-  // Get payment details
-  const currentPaymentId = paymentId || localStorage.getItem('payment_id') || `payment_${Date.now()}`;
-  const seatPrice = selectedSeat?.price || 100;
+  // Refs
+  const pubnubRef = useRef<PubNub | null>(null);
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Simulate payment mutation
-  const simulatePaymentMutation = useMutation({
-    mutationFn: api.simulatePayment,
-    onSuccess: (response: SimulatePaymentResponse) => {
-      if (response.success && response.status === 'success') {
-        setPaymentStatus('success');
+  // Generate QR Code Mutation
+  const generateQRMutation = useMutation({
+    mutationFn: paymentAPI.generateQR,
+    onSuccess: (data: GenerateQRResponse) => {
+      if (data.status === 'success' && data.code) {
+        setQrCode(data.code);
+        setPaymentStatus('pending');
         setError(null);
-
-        // Store transaction details
-        localStorage.setItem('transaction_id', response.transaction_id || '');
-        localStorage.setItem('payment_completed', 'true');
-
-        // Redirect to success page after a short delay
-        setTimeout(() => {
-          onNext('success');
-        }, 2000);
+        startCountdown();
+        setupPubNub();
       } else {
-        setPaymentStatus('failed');
-        setError(response.message || 'Payment failed');
+        setError('Failed to generate QR code');
+        setPaymentStatus('error');
       }
     },
     onError: (error: Error) => {
-      setPaymentStatus('failed');
+      setError(error.message);
+      setPaymentStatus('error');
+    },
+  });
+
+  // Cancel Payment Mutation
+  const cancelPaymentMutation = useMutation({
+    mutationFn: () => paymentAPI.cancelPayment(paymentId),
+    onSuccess: (data: CancelPaymentResponse) => {
+      if (data.success) {
+        setPaymentStatus('cancelled');
+        cleanupResources();
+        onCancel();
+      } else {
+        setError(data.message || 'Failed to cancel payment');
+      }
+    },
+    onError: (error: Error) => {
       setError(error.message);
     },
   });
 
-  // Countdown timer effect
-  useEffect(() => {
-    if (countdown > 0 && paymentStatus === 'pending') {
-      const timer = setTimeout(() => {
-        setCountdown(countdown - 1);
-      }, 1000);
-      return () => clearTimeout(timer);
-    } else if (countdown === 0 && paymentStatus === 'pending') {
-      setPaymentStatus('failed');
-      setError('Payment timeout - please try again');
+  // Setup PubNub for payment notifications
+  const setupPubNub = () => {
+    if (!process.env.REACT_APP_PUBNUB_SUBSCRIBE_KEY) {
+      console.error('PubNub subscribe key not found');
+      return;
     }
-  }, [countdown, paymentStatus]);
+
+    try {
+      const pubnub = new PubNub({
+        subscribeKey: process.env.REACT_APP_PUBNUB_SUBSCRIBE_KEY,
+        userId: `payment_${paymentId}`,
+      });
+
+      pubnubRef.current = pubnub;
+
+      // Listen for payment success messages
+      pubnub.addListener({
+        message: (event) => {
+          console.log('PubNub message received:', event);
+
+          if (event.message?.type === 'payment_success' &&
+            event.message?.payment_id === paymentId) {
+            console.log('Payment success received!');
+            setPaymentStatus('success');
+            cleanupResources();
+
+            // Small delay before calling onSuccess for better UX
+            setTimeout(() => {
+              onSuccess();
+            }, 2000);
+          }
+        },
+        status: (statusEvent) => {
+          console.log('PubNub status:', statusEvent);
+        },
+      });
+
+      // Subscribe to payment channel
+      pubnub.subscribe({
+        channels: [`payment_${paymentId}`, 'payment_notifications'],
+      });
+
+      console.log('PubNub setup complete, subscribed to:', `payment_${paymentId}`);
+    } catch (error) {
+      console.error('PubNub setup error:', error);
+      setError('Failed to setup payment notifications');
+    }
+  };
+
+  // Start countdown timer
+  const startCountdown = () => {
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+    }
+
+    countdownIntervalRef.current = setInterval(() => {
+      setCountdown((prevCountdown) => {
+        if (prevCountdown <= 1) {
+          // Timer expired
+          setPaymentStatus('expired');
+          cleanupResources();
+          return 0;
+        }
+        return prevCountdown - 1;
+      });
+    }, 1000);
+  };
+
+  // Cleanup resources
+  const cleanupResources = () => {
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+
+    if (pubnubRef.current) {
+      pubnubRef.current.unsubscribeAll();
+      pubnubRef.current.destroy();
+      pubnubRef.current = null;
+    }
+  };
 
   // Format countdown time
   const formatTime = (seconds: number): string => {
@@ -120,48 +217,116 @@ const PaymentPage: React.FC<PaymentPageProps> = ({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Handle successful payment simulation
-  const handleSuccessfulPayment = () => {
-    console.log('✅ Simulating successful payment...');
-    setPaymentStatus('processing');
-    setError(null);
+  // Handle cancel payment
+  const handleCancelPayment = () => {
+    if (window.confirm('Are you sure you want to cancel this payment?')) {
+      cancelPaymentMutation.mutate();
+    }
+  };
 
-    // Call API with success simulation
-    simulatePaymentMutation.mutate({
-      payment_id: currentPaymentId,
-      event_id: eventId,
-      session_id: sessionId,
-      amount: seatPrice,
-      seat_ids: selectedSeat ? [selectedSeat.id] : [],
-      simulate_result: 'success', // Force success
+  // Initialize QR code generation on mount
+  useEffect(() => {
+    generateQRMutation.mutate({
+      book_id: bookId,
+      phone: phone,
+      amount: amount,
     });
-  };
 
-  // Handle failed payment simulation
-  const handleFailedPayment = () => {
-    console.log('❌ Simulating failed payment...');
-    setPaymentStatus('processing');
-    setError(null);
+    // Cleanup on unmount
+    return () => {
+      cleanupResources();
+    };
+  }, [bookId, phone, amount]);
 
-    // Call API with failure simulation
-    simulatePaymentMutation.mutate({
-      payment_id: currentPaymentId,
-      event_id: eventId,
-      session_id: sessionId,
-      amount: seatPrice,
-      seat_ids: selectedSeat ? [selectedSeat.id] : [],
-      simulate_result: 'failed', // Force failure
-    });
-  };
+  // Render loading state
+  if (paymentStatus === 'loading') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Generating QR Code</h2>
+          <p className="text-gray-600">Please wait while we prepare your payment...</p>
+        </div>
+      </div>
+    );
+  }
 
-  // Reset payment state
-  const handleReset = () => {
-    console.log('🔄 Resetting payment...');
-    setPaymentStatus('pending');
-    setError(null);
-    setCountdown(600);
-  };
+  // Render error state
+  if (paymentStatus === 'error') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+          <div className="text-red-600 text-6xl mb-4">❌</div>
+          <h2 className="text-xl font-semibold text-red-900 mb-2">Payment Error</h2>
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-semibold"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
+  // Render success state
+  if (paymentStatus === 'success') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+          <div className="text-green-600 text-6xl mb-4">✅</div>
+          <h2 className="text-xl font-semibold text-green-900 mb-2">Payment Successful!</h2>
+          <p className="text-green-600 mb-4">Your payment has been processed successfully.</p>
+          <div className="bg-green-50 rounded-lg p-4">
+            <p className="text-green-800 text-sm">
+              Redirecting to confirmation page...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Render cancelled state
+  if (paymentStatus === 'cancelled') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100 flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+          <div className="text-gray-600 text-6xl mb-4">🚫</div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Payment Cancelled</h2>
+          <p className="text-gray-600 mb-4">Your payment has been cancelled successfully.</p>
+          <button
+            onClick={onCancel}
+            className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-semibold"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Render expired state
+  if (paymentStatus === 'expired') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-100 flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+          <div className="text-orange-600 text-6xl mb-4">⏰</div>
+          <h2 className="text-xl font-semibold text-orange-900 mb-2">Payment Expired</h2>
+          <p className="text-orange-600 mb-4">The payment session has timed out.</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg font-semibold"
+          >
+            Start New Payment
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Main payment UI (pending state)
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="max-w-2xl mx-auto">
@@ -170,188 +335,107 @@ const PaymentPage: React.FC<PaymentPageProps> = ({
             Complete Your Payment
           </h1>
 
-          {/* Payment Status */}
-          <div className="text-center mb-6">
-            {paymentStatus === 'pending' && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="text-blue-600 text-lg font-semibold mb-2">
-                  Scan QR Code to Pay
-                </div>
-                <div className="text-blue-500">
-                  Time remaining: {formatTime(countdown)}
-                </div>
-              </div>
-            )}
-
-            {paymentStatus === 'processing' && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-600 mx-auto mb-2"></div>
-                <div className="text-yellow-600 text-lg font-semibold">
-                  Processing Payment...
-                </div>
-                <div className="text-yellow-500">
-                  Please wait while we confirm your payment
-                </div>
-              </div>
-            )}
-
-            {paymentStatus === 'success' && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="text-green-600 text-lg font-semibold mb-2">
-                  ✅ Payment Successful!
-                </div>
-                <div className="text-green-500">
-                  Redirecting to confirmation page...
-                </div>
-              </div>
-            )}
-
-            {paymentStatus === 'failed' && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <div className="text-red-600 text-lg font-semibold mb-2">
-                  ❌ Payment Failed
-                </div>
-                <div className="text-red-500 mb-4">
-                  {error || 'Something went wrong with your payment'}
-                </div>
-                <button
-                  onClick={handleReset}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold"
-                >
-                  Try Again
-                </button>
-              </div>
-            )}
+          {/* Countdown Timer */}
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6 text-center">
+            <div className="text-orange-600 text-lg font-semibold mb-1">
+              Time Remaining: {formatTime(countdown)}
+            </div>
+            <div className="text-orange-500 text-sm">
+              Complete your payment before the time expires
+            </div>
           </div>
 
-          {/* QR Code */}
-          {(paymentStatus === 'pending' || paymentStatus === 'processing') && (
-            <div className="text-center mb-6">
-              <div className="bg-white border-2 border-gray-200 rounded-lg p-4 inline-block">
-                <img
-                  src={qrCode}
-                  alt="Payment QR Code"
-                  className="w-48 h-48 mx-auto"
+          {/* QR Code Display */}
+          <div className="text-center mb-6">
+            <div className="bg-white border-2 border-gray-200 rounded-lg p-6 inline-block">
+              {qrCode ? (
+                <QRCode
+                  value={qrCode}
+                  size={256}
+                  style={{ height: "auto", maxWidth: "100%", width: "100%" }}
                 />
-              </div>
+              ) : (
+                <div className="w-64 h-64 bg-gray-100 rounded flex items-center justify-center">
+                  <div className="text-gray-500">Loading QR Code...</div>
+                </div>
+              )}
             </div>
-          )}
-
-          {/* Manual Payment Simulation Buttons */}
-          {paymentStatus === 'pending' && (
-            <div className="bg-gray-100 border border-gray-300 rounded-lg p-6 mb-6">
-              <h4 className="font-semibold text-gray-700 mb-4 text-center">
-                Simulate Payment Result
-              </h4>
-              <div className="flex gap-4 justify-center">
-                <button
-                  onClick={handleSuccessfulPayment}
-                  disabled={simulatePaymentMutation.isPending}
-                  className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2"
-                >
-                  <span>✅</span>
-                  {simulatePaymentMutation.isPending ? 'Processing...' : 'Successful Payment'}
-                </button>
-
-                <button
-                  onClick={handleFailedPayment}
-                  disabled={simulatePaymentMutation.isPending}
-                  className="bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2"
-                >
-                  <span>❌</span>
-                  {simulatePaymentMutation.isPending ? 'Processing...' : 'Failed Payment'}
-                </button>
-              </div>
-              <p className="text-gray-600 text-sm text-center mt-3">
-                Click either button to simulate the payment result
-              </p>
-            </div>
-          )}
+          </div>
 
           {/* Payment Details */}
           <div className="bg-gray-50 rounded-lg p-6 mb-6">
             <h3 className="font-semibold text-gray-900 mb-4">Payment Details</h3>
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span className="text-gray-600">Payment ID:</span>
-                <span className="font-mono text-sm">{currentPaymentId.slice(-8)}</span>
+                <span className="text-gray-600">Amount:</span>
+                <span className="font-semibold">${amount}</span>
               </div>
-              {selectedSeat && (
-                <>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Seat:</span>
-                    <span>{selectedSeat.row}{selectedSeat.number}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Price:</span>
-                    <span className="font-semibold">${selectedSeat.price}</span>
-                  </div>
-                </>
-              )}
               <div className="flex justify-between">
-                <span className="text-gray-600">Event ID:</span>
-                <span className="font-mono text-sm">{eventId.slice(-8)}</span>
+                <span className="text-gray-600">Phone:</span>
+                <span className="font-mono text-sm">{phone}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Booking ID:</span>
+                <span className="font-mono text-sm">{bookId.slice(-8)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Payment ID:</span>
+                <span className="font-mono text-sm">{paymentId.slice(-8)}</span>
               </div>
             </div>
           </div>
 
           {/* Instructions */}
-          {paymentStatus === 'pending' && (
-            <div className="bg-blue-50 rounded-lg p-4 mb-6">
-              <h4 className="font-semibold text-blue-900 mb-2">Payment Instructions</h4>
-              <ol className="list-decimal list-inside text-blue-800 text-sm space-y-1">
-                <li>Open your mobile banking app</li>
-                <li>Scan the QR code above</li>
-                <li>Confirm the payment amount</li>
-                <li>Complete the transaction</li>
-                <li><strong>OR use the simulation buttons above for testing</strong></li>
-              </ol>
+          <div className="bg-blue-50 rounded-lg p-4 mb-6">
+            <h4 className="font-semibold text-blue-900 mb-2">Payment Instructions</h4>
+            <ol className="list-decimal list-inside text-blue-800 text-sm space-y-1">
+              <li>Open your JDB mobile banking app</li>
+              <li>Select "QR Payment" or "Scan to Pay"</li>
+              <li>Scan the QR code above</li>
+              <li>Confirm the payment amount</li>
+              <li>Complete the transaction</li>
+            </ol>
+          </div>
+
+          {/* Cancel Button */}
+          <div className="text-center">
+            <button
+              onClick={handleCancelPayment}
+              disabled={cancelPaymentMutation.isPending}
+              className="bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+            >
+              {cancelPaymentMutation.isPending ? 'Cancelling...' : 'Cancel Payment'}
+            </button>
+          </div>
+
+          {/* Loading indicators */}
+          {(generateQRMutation.isPending || cancelPaymentMutation.isPending) && (
+            <div className="text-center mt-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="text-gray-600 mt-2 text-sm">
+                {generateQRMutation.isPending ? 'Generating QR code...' : 'Cancelling payment...'}
+              </p>
             </div>
           )}
 
-          {/* Debug Info - Development Only */}
+          {/* Error display */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mt-4">
+              <p className="text-red-800 font-semibold">Error</p>
+              <p className="text-red-600 text-sm">{error}</p>
+            </div>
+          )}
+
+          {/* Development info */}
           {process.env.NODE_ENV === 'development' && (
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+            <div className="bg-gray-100 border border-gray-300 rounded-lg p-3 mt-4">
               <h5 className="font-semibold text-gray-700 text-sm mb-2">Debug Info</h5>
               <div className="text-xs space-y-1 text-gray-600">
                 <div>Status: <span className="font-mono">{paymentStatus}</span></div>
+                <div>QR Generated: <span className="font-mono">{qrCode ? 'Yes' : 'No'}</span></div>
+                <div>PubNub Connected: <span className="font-mono">{pubnubRef.current ? 'Yes' : 'No'}</span></div>
                 <div>Countdown: <span className="font-mono">{countdown}s</span></div>
-                <div>API Pending: <span className="font-mono">{simulatePaymentMutation.isPending.toString()}</span></div>
-                <div>Error: <span className="font-mono">{error || 'None'}</span></div>
               </div>
-
-              {/* Additional Debug Controls */}
-              <div className="mt-3 pt-3 border-t border-gray-300">
-                <h6 className="font-semibold text-gray-700 text-xs mb-2">Quick Actions:</h6>
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleReset}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs"
-                  >
-                    Reset
-                  </button>
-                  <button
-                    onClick={() => setPaymentStatus('processing')}
-                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs"
-                  >
-                    Processing
-                  </button>
-                  <button
-                    onClick={() => setCountdown(10)}
-                    className="bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs"
-                  >
-                    10s Timer
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Loading indicator for API call */}
-          {simulatePaymentMutation.isPending && (
-            <div className="text-center mt-4">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="text-gray-600 mt-2">Calling payment API...</p>
             </div>
           )}
         </div>

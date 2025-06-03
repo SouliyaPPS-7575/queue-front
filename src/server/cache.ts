@@ -48,7 +48,7 @@ export const localStorageData = (name: string) => {
   };
 
   return {
-    getLocalStrage,
+    getLocalStorage: getLocalStrage,
     setLocalStorage,
     removeLocalStorage,
   };

@@ -10,7 +10,7 @@ import { localStorageData } from '~/server/cache';
 // 🚀 Safely get language (Avoid `localStorage` in SSR)
 const getLanguage = () =>
   typeof window !== 'undefined'
-    ? localStorageData('language').getLocalStrage() || 'en'
+    ? localStorageData('language').getLocalStorage() || 'en'
     : 'en';
 
 // ✅ Define resources

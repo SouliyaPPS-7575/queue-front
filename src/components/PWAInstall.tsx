@@ -23,7 +23,7 @@ const useInstallPrompt = () => {
       // Add to Home Screen (A2HS) Prompt
       let deferredPrompt: any;
       const hasShownA2HS =
-        localStorageData('hasShownA2HS').getLocalStrage() === 'true';
+        localStorageData('hasShownA2HS').getLocalStorage() === 'true';
 
       if (!hasShownA2HS) {
         window.addEventListener('beforeinstallprompt', (event) => {
