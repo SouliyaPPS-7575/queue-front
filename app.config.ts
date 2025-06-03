@@ -16,6 +16,9 @@ export default defineConfig({
     appDirectory: 'src',
   },
   vite: {
+    optimizeDeps: {
+      exclude: ['@tanstack/start-server-core', '@tanstack/react-start-server'],
+    },
     ssr: {
       noExternal: ['@mui/*'],
     },
@@ -102,6 +105,7 @@ export default defineConfig({
     build: {
       chunkSizeWarningLimit: 5000,
       rollupOptions: {
+        external: ['@tanstack/start-server-core', '@tanstack/react-start-server'],
         onwarn(warning, warn) {
           if (warning.code === 'UNUSED_EXTERNAL_IMPORT') return;
           if (warning.code === 'MODULE_LEVEL_DIRECTIVE') return;

@@ -4,6 +4,7 @@ import {
   Clock,
   CheckCircle,
 } from 'lucide-react';
+import { BookingStep } from '~/types/queue';
 import { getToken } from '~/server/auth';
 
 const API_BASE = process.env.API_BASE ?? `${process.env.BASE_URL}/api/v1`;
@@ -49,7 +50,7 @@ const WaitingPage = ({
   onNext,
 }: {
   eventId: string;
-  onNext: (step: string) => void;
+  onNext: (step: BookingStep) => void;
 }) => {
   const [countdown, setCountdown] = useState(0);
 

@@ -9,6 +9,7 @@ import WaitingPage from '~/components/WaitingPage';
 import QueuePage from '~/components/QueuePage';
 import BookingProgressBar from '~/components/ProgressBar';
 import BookingSuccessPage from '~/components/BookingSuccessPage';
+import { BookingStep, PaymentData, StepComponentProps } from '~/types/queue';
 
 
 export const Route = createFileRoute('/queue/view/$eventID')({
@@ -174,7 +175,7 @@ function renderStepComponent(
       );
 
     case 'success':
-      return <BookingSuccessPage eventId={eventId} />;
+      return <BookingSuccessPage />;
 
     default:
       return <WaitingPage eventId={eventId} onNext={onNext} />;

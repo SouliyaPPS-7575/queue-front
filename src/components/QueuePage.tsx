@@ -3,12 +3,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Users, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { getToken } from '~/server/auth';
 import PubNub from 'pubnub';
+import { BookingStep } from '~/types/queue';
 
 interface QueuePageProps {
   eventId: string;
   sessionId: string;
   customerId: string;
-  onNext: (step: string) => void;
+  onNext: (step: BookingStep) => void;
 }
 
 

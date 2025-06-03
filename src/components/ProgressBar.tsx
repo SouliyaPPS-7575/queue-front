@@ -1,3 +1,5 @@
+import { BookingStep } from '~/types/queue';
+
 function BookingProgressBar({ currentStep }: { currentStep: BookingStep }) {
 
   const steps: { key: BookingStep; label: string }[] = [

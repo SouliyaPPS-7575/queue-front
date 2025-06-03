@@ -1,13 +1,13 @@
-type BookingStep = 'waiting' | 'queue' | 'tickets' | 'payment' | 'success';
+export type BookingStep = 'waiting' | 'queue' | 'tickets' | 'payment' | 'success';
 
-interface PaymentData {
+export interface PaymentData {
   bookId: string;
   amount: string;
   paymentId: string;
   phone?: string;
 }
 
-interface StepComponentProps {
+export interface StepComponentProps {
   eventId: string;
   sessionId: string;
   customerId: string;

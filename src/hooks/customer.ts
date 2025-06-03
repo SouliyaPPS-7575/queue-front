@@ -23,7 +23,7 @@ export const useCustomer = (): UseCustomerReturn => {
         const customer_id = await getCookie('customer_id');
 
         if (isMounted) {
-          setCustomerId(customer_id);
+          setCustomerId(customer_id ?? null);
         }
       } catch (err) {
         if (isMounted) {

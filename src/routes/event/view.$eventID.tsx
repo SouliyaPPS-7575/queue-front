@@ -195,6 +195,9 @@ function RouteComponent() {
                   params={{
                     eventID: event.id ?? '',
                   }}
+                  search={{
+                    step: 'waiting',
+                  }}
                 >
                   <Button
                     variant="contained"

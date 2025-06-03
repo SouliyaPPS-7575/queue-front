@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Lock } from 'lucide-react';
 import { getToken } from '~/server/auth';
+import { BookingStep } from '~/types/queue';
 
 interface SeatResponse {
   seats: Seat[];           // ✅ Array of seats
@@ -47,6 +48,8 @@ interface BookingConfirmResponse {
 
 interface TicketSelectionPageProps {
   eventId: string;
+  sessionId: string;
+  customerId: string;
   onNext: (step: BookingStep, data?: any) => void;
 }
 
@@ -340,8 +343,8 @@ const TicketSelectionPage = ({
                         key={seat.id}
                         onClick={() => handleSeatSelect(seat)}
                         disabled={
-                          seat.status !== 'available' ||
                           lockSeatMutation.isPending ||
+                          seat.status === 'sold' ||
                           (seat.status === 'locked' && selectedSeat?.id !== seat.id)
                         }
                         className={getSeatButtonClass(seat)}

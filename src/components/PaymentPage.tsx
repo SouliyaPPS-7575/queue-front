@@ -152,7 +152,7 @@ const PaymentPage: React.FC<PaymentPageProps> = ({
 
       // Listen for payment success messages
       pubnub.addListener({
-        message: (event) => {
+        message: (event: any) => {
           console.log('PubNub message received:', event);
 
           if (event.message?.type === 'payment_success' &&
@@ -167,7 +167,7 @@ const PaymentPage: React.FC<PaymentPageProps> = ({
             }, 2000);
           }
         },
-        status: (statusEvent) => {
+        status: (statusEvent: any) => {
           console.log('PubNub status:', statusEvent);
         },
       });

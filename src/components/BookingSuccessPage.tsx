@@ -1,6 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
 
-function BookingSuccessPage({ eventId }: { eventId: string }) {
+function BookingSuccessPage() {
   const navigate = useNavigate();
 
   return (
@@ -31,14 +31,14 @@ function BookingSuccessPage({ eventId }: { eventId: string }) {
 
       <div className="space-y-3">
         <button
-          onClick={() => navigate({ to: '/bookings' })}
+          onClick={() => navigate({ to: '/service' })}
           className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
         >
           View My Bookings
         </button>
 
         <button
-          onClick={() => navigate({ to: '/events' })}
+          onClick={() => navigate({ to: '/event' })}
           className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50"
         >
           Browse More Events
