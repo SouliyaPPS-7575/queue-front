@@ -37,7 +37,7 @@ const API_BASE = process.env.API_BASE ?? `${process.env.BASE_URL}/api/v1`;
 // API Functions
 const paymentAPI = {
   generateQR: async (data: GenerateQRRequest): Promise<GenerateQRResponse> => {
-    const response = await fetch(`${API_BASE}/api/v1/payment/gen-jdb-qr`, {
+    const response = await fetch(`${API_BASE}/payment/gen-jdb-qr`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -55,7 +55,7 @@ const paymentAPI = {
   },
 
   cancelPayment: async (paymentId: string): Promise<CancelPaymentResponse> => {
-    const response = await fetch(`${API_BASE}/api/v1/payment/${paymentId}/cancel`, {
+    const response = await fetch(`${API_BASE}/payment/${paymentId}/cancel`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

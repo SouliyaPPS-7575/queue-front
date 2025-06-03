@@ -38,14 +38,16 @@ interface LockSeatResponse {
 
 interface BookingConfirmResponse {
   success: boolean;
+  book_id: string;
   payment_id: string;
   message: string;
+  amount: string;
+  phone: string;
 }
 
 interface TicketSelectionPageProps {
   eventId: string;
-  sessionId: string;
-  onNext: (step: string) => void;
+  onNext: (step: BookingStep, data?: any) => void;
 }
 
 const API_BASE = process.env.API_BASE ?? `${process.env.BASE_URL}/api/v1`;
@@ -119,7 +121,6 @@ const api = {
 
 const TicketSelectionPage = ({
   eventId,
-  sessionId,
   onNext,
 }: TicketSelectionPageProps) => {
   const [selectedSeat, setSelectedSeat] = useState<Seat | null>(null);
@@ -168,9 +169,18 @@ const TicketSelectionPage = ({
     mutationFn: api.confirmBooking,
     onSuccess: (response: BookingConfirmResponse) => {
       if (response.success) {
+        console.log("=> book success")
         // Store payment ID for next step
         localStorage.setItem('payment_id', response.payment_id);
-        onNext('payment');
+
+        onNext('payment', {
+          bookId: response.book_id,
+          paymentId: response.payment_id,
+          amount: response.amount,
+          phone: response.phone || '+8562099483399', // fallback phone
+        });
+
+        console.log("=> end book success")
       }
     },
     onError: (error: Error) => {
@@ -215,7 +225,6 @@ const TicketSelectionPage = ({
       event_id: eventId,
       seat_ids: [selectedSeat.id],
     });
-    onNext('payment');
   };
 
   const formatLockTime = (seconds: number): string => {
