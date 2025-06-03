@@ -13,6 +13,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useSession } from '~/hooks/session';
 import { getToken } from '~/server/auth';
 import { useCustomer } from '~/hooks/customer';
+import { localStorageData } from '~/server/cache';
 
 export const Route = createFileRoute('/queue/view/$eventID')({
   component: RouteComponent,
@@ -95,7 +96,6 @@ const api = {
   },
 
   lockSeat: async ({
-    sessionId,
     eventId,
     seatId,
   }: {
@@ -111,7 +111,6 @@ const api = {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        customer_id: sessionId,
         event_id: eventId,
         seat_id: seatId,
       }),
@@ -298,6 +297,11 @@ const QueuePage = ({
     enabled: enterQueueMutation.isSuccess || enterQueueMutation.isIdle,
   });
 
+  if (customerId == "") {
+    console.log("=> customer id is empty")
+    return
+  }
+
   usePubNub(customerId, (message) => {
     if (message.type === 'proceed') {
       onNext('tickets');
@@ -308,9 +312,9 @@ const QueuePage = ({
 
   useEffect(() => {
     if (!enterQueueMutation.isSuccess && !enterQueueMutation.isPending) {
-      enterQueueMutation.mutate({ sessionId: customerId, eventId });
+      enterQueueMutation.mutate({ sessionId, eventId });
     }
-  }, [customerId, eventId, enterQueueMutation]);
+  }, []);
 
   useEffect(() => {
     console.log("=> queue position", queuePosition)
@@ -676,11 +680,14 @@ function RouteComponent() {
   const [currentStep, setCurrentStep] = useState('waiting');
   const { eventID } = Route.useParams();
   const { sessionID, isLoading: sessionLoading } = useSession();
-  const { customerId, isLoading: customerLoading } = useCustomer();
+  // const { customerId, isLoading: customerLoading } = useCustomer();
+
+  // localStorageData('token').getLocalStrage()
+  const customerId = localStorageData('customer_id').getLocalStrage()
 
 
 
-  if (sessionLoading || !sessionID || customerLoading) {
+  if (sessionLoading || !sessionID) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
