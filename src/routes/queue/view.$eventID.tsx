@@ -5,21 +5,50 @@ import {
   Clock,
   Users,
   CheckCircle,
-  Lock,
   CreditCard,
   AlertCircle,
 } from 'lucide-react';
 import { createFileRoute } from '@tanstack/react-router';
 import { useSession } from '~/hooks/session';
 import { getToken } from '~/server/auth';
-import { useCustomer } from '~/hooks/customer';
 import { localStorageData } from '~/server/cache';
+import TicketSelectionPage from '~/components/SelectSeat';
+import PaymentPage from '~/components/PaymentPage';
 
 export const Route = createFileRoute('/queue/view/$eventID')({
   component: RouteComponent,
 });
 
 const API_BASE = process.env.API_BASE ?? `${process.env.BASE_URL}/api/v1`;
+
+interface PaymentPageProps {
+  eventId: string;
+  sessionId: string;
+  paymentId?: string;
+  selectedSeat?: {
+    id: string;
+    row: string;
+    number: number;
+    price: number;
+  };
+  onNext: (step: string) => void;
+}
+
+interface SimulatePaymentRequest {
+  payment_id: string;
+  event_id: string;
+  session_id: string;
+  amount: number;
+  seat_ids: string[];
+}
+
+interface SimulatePaymentResponse {
+  success: boolean;
+  payment_id: string;
+  message: string;
+  status: 'success' | 'failed';
+  transaction_id?: string;
+}
 
 const api = {
   getWaitingPageInfo: async (eventId: string) => {
@@ -122,20 +151,39 @@ const api = {
   booking: async ({
     sessionId,
     eventId,
+    seatId,
   }: {
     sessionId: string;
     eventId: string;
+    seatId: string;
   }) => {
     const { token } = await getToken();
-    const response = await fetch(`${API_BASE}/events/${eventId}/book`, {
+    const response = await fetch(`${API_BASE}/booking/confirm`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ session_id: sessionId, event_id: eventId }),
+      body: JSON.stringify({ session_id: sessionId, seatIds: [seatId], event_id: eventId }),
     });
     if (!response.ok) throw new Error('Failed to lock seat');
+    return response.json();
+  },
+  simulatePayment: async (data: SimulatePaymentRequest): Promise<SimulatePaymentResponse> => {
+    const response = await fetch('/api/v1/test/simulate-payment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Payment simulation failed');
+    }
+
     return response.json();
   },
 };
@@ -378,303 +426,7 @@ const QueuePage = ({
   );
 };
 
-const TicketSelectionPage = ({
-  eventId,
-  sessionId,
-  onNext,
-}: {
-  eventId: string;
-  sessionId: string;
-  onNext: (step: string) => void;
-}) => {
-  const [selectedSeat, setSelectedSeat] = useState<{
-    id: string;
-    row: string;
-    number: number;
-    price: number;
-    available: boolean;
-  } | null>(null);
-  const [lockTimer, setLockTimer] = useState<number | null>(null);
 
-  const seats: {
-    id: string;
-    row: string;
-    number: number;
-    price: number;
-    available: boolean;
-  }[] = [
-      { id: 'A1', row: 'A', number: 1, price: 100, available: true },
-      { id: 'A2', row: 'A', number: 2, price: 100, available: true },
-      { id: 'A3', row: 'A', number: 3, price: 100, available: false },
-      { id: 'B1', row: 'B', number: 1, price: 80, available: true },
-      { id: 'B2', row: 'B', number: 2, price: 80, available: true },
-      { id: 'B3', row: 'B', number: 3, price: 80, available: true },
-    ];
-
-  const submitMutation = useMutation({
-    mutationFn: api.booking,
-    onSuccess: () => {
-      setLockTimer(300);
-    },
-  });
-
-  const lockSeatMutation = useMutation({
-    mutationFn: api.lockSeat,
-    onSuccess: () => {
-      setLockTimer(300);
-    },
-  });
-
-  useEffect(() => {
-    if (lockTimer !== null && lockTimer > 0) {
-      const timer = setTimeout(() => {
-        setLockTimer(lockTimer - 1);
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [lockTimer]);
-
-  const handleSeatSelect = (seat: {
-    id: string;
-    row: string;
-    number: number;
-    price: number;
-    available: boolean;
-  }) => {
-    if (!seat.available) return;
-    setSelectedSeat(seat);
-    lockSeatMutation.mutate({
-      sessionId,
-      eventId,
-      seatId: seat.id,
-    });
-  };
-
-  const handleSubmit = () => {
-    submitMutation.mutate({ sessionId, eventId });
-    onNext('payment');
-  };
-
-  const formatLockTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-            Select Your Seat
-          </h1>
-
-          {lockTimer !== null && (
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6 text-center">
-              <Lock className="w-6 h-6 text-orange-600 mx-auto mb-2" />
-              <p className="text-orange-800 font-semibold">
-                Seat locked for: {formatLockTime(lockTimer)}
-              </p>
-              <p className="text-orange-600 text-sm">
-                Complete your purchase before time expires
-              </p>
-            </div>
-          )}
-
-          <div className="bg-gray-800 text-white text-center py-4 rounded-lg mb-8">
-            <p className="font-semibold">STAGE</p>
-          </div>
-
-          <div className="space-y-4 mb-8">
-            {['A', 'B'].map((row) => (
-              <div
-                key={row}
-                className="flex justify-center items-center space-x-4"
-              >
-                <span className="w-8 text-center font-semibold">{row}</span>
-                <div className="flex space-x-2">
-                  {seats
-                    .filter((seat) => seat.row === row)
-                    .map((seat) => (
-                      <button
-                        key={seat.id}
-                        onClick={() => handleSeatSelect(seat)}
-                        disabled={
-                          !seat.available || selectedSeat?.id === seat.id
-                        }
-                        className={`
-                        w-12 h-12 rounded-lg font-semibold text-sm transition-colors
-                        ${!seat.available
-                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                            : selectedSeat?.id === seat.id
-                              ? 'bg-orange-500 text-white'
-                              : 'bg-green-100 hover:bg-green-200 text-green-800'
-                          }
-                      `}
-                      >
-                        {seat.number}
-                      </button>
-                    ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex justify-center space-x-6 mb-8 text-sm">
-            <div className="flex items-center">
-              <div className="w-4 h-4 bg-green-100 rounded mr-2"></div>
-              <span>Available</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-4 h-4 bg-orange-500 rounded mr-2"></div>
-              <span>Selected</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-4 h-4 bg-gray-300 rounded mr-2"></div>
-              <span>Unavailable</span>
-            </div>
-          </div>
-
-          {selectedSeat && (
-            <div className="bg-blue-50 rounded-lg p-6 mb-6">
-              <h3 className="font-semibold text-blue-900 mb-2">
-                Selected Seat
-              </h3>
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-blue-800">
-                    Seat {selectedSeat.row}
-                    {selectedSeat.number}
-                  </p>
-                  <p className="text-blue-600 text-sm">
-                    Row {selectedSeat.row}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-blue-900">
-                    ${selectedSeat.price}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <button
-            onClick={handleSubmit}
-            disabled={!selectedSeat || lockSeatMutation.isPending}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-4 px-6 rounded-lg font-semibold text-lg transition-colors"
-          >
-            {lockSeatMutation.isPending
-              ? 'Locking Seat...'
-              : 'Proceed to Payment'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const PaymentPage = () => {
-  const [qrCode] = useState(
-    'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2ZmZiIvPjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0iY2VudHJhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzMzMyI+TW9jayBRUiBDb2RlPC90ZXh0Pjwvc3ZnPg==',
-  );
-  const [paymentStatus, setPaymentStatus] = useState('pending'); // pending, processing, success, failed
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setPaymentStatus('processing');
-      setTimeout(() => {
-        setPaymentStatus(Math.random() > 0.2 ? 'success' : 'failed');
-      }, 3000);
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (paymentStatus === 'success') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md text-center">
-          <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-6" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">
-            Payment Successful!
-          </h1>
-          <p className="text-gray-600 mb-6">Your ticket has been confirmed.</p>
-          <div className="bg-green-50 rounded-lg p-4 mb-6">
-            <p className="text-green-800 font-semibold">Ticket Details</p>
-            <p className="text-green-600">Seat A1 - $100</p>
-          </div>
-          <button className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-lg font-semibold">
-            Download Ticket
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (paymentStatus === 'failed') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md text-center">
-          <AlertCircle className="w-16 h-16 text-red-600 mx-auto mb-6" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">
-            Payment Failed
-          </h1>
-          <p className="text-gray-600 mb-6">
-            Please try again or contact support.
-          </p>
-          <button className="w-full bg-red-600 hover:bg-red-700 text-white py-3 px-6 rounded-lg font-semibold">
-            Try Again
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md text-center">
-        <CreditCard className="w-16 h-16 text-blue-600 mx-auto mb-6" />
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">
-          Complete Payment
-        </h1>
-
-        <div className="bg-blue-50 rounded-lg p-4 mb-6">
-          <p className="text-blue-800 font-semibold">Total Amount</p>
-          <p className="text-3xl font-bold text-blue-900">$100</p>
-        </div>
-
-        <div className="mb-6">
-          <p className="text-gray-600 mb-4">
-            Scan QR code with your banking app
-          </p>
-          <div className="flex justify-center">
-            <img
-              src={qrCode}
-              alt="Payment QR Code"
-              className="w-48 h-48 border rounded-lg"
-            />
-          </div>
-        </div>
-
-        {paymentStatus === 'processing' && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-yellow-600 mx-auto mb-2"></div>
-            <p className="text-yellow-800 font-semibold">
-              Processing Payment...
-            </p>
-          </div>
-        )}
-
-        {paymentStatus === 'pending' && (
-          <p className="text-gray-500 text-sm">
-            Waiting for payment confirmation...
-          </p>
-        )}
-      </div>
-    </div>
-  );
-};
 
 function RouteComponent() {
   const [currentStep, setCurrentStep] = useState('waiting');
@@ -720,7 +472,11 @@ function RouteComponent() {
         />
       );
     case 'payment':
-      return <PaymentPage />;
+      return <PaymentPage
+        eventId={eventID}
+        sessionId={sessionID}
+        onNext={handleNext}
+      />;
     default:
       return <WaitingPage eventId={eventId} onNext={handleNext} />;
   }
